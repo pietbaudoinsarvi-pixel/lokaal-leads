@@ -10,6 +10,11 @@ import Reviews from "@/components/site/Reviews";
 import Faq from "@/components/site/Faq";
 import About from "@/components/site/About";
 
+export async function generateMetadata({ params }: { params: Promise<{ client: string }> }) {
+  const { client } = await params;
+  return { alternates: { canonical: `/${client}` } };
+}
+
 export default async function HomePage({ params }: { params: Promise<{ client: string }> }) {
   const { client } = await params;
   const config = await getClient(client);
@@ -25,6 +30,7 @@ export default async function HomePage({ params }: { params: Promise<{ client: s
         phone={config.business.phone}
         photo={p.photos[p.hero.imageSlot]}
         eyebrow={config.business.city}
+        reviews={p.reviews}
       />
       <Usps usps={p.usps} />
       <Process process={p.process} />

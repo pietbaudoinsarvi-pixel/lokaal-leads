@@ -2,6 +2,17 @@ import { notFound } from "next/navigation";
 import { getClient } from "@/lib/clients";
 import Contact from "@/components/site/Contact";
 
+export async function generateMetadata({ params }: { params: Promise<{ client: string }> }) {
+  const { client } = await params;
+  const config = await getClient(client);
+  if (!config) return {};
+  return {
+    title: `Contact en offerte | ${config.business.name} ${config.business.city}`,
+    description: config.presentation.contact.intro,
+    alternates: { canonical: `/${client}/contact` },
+  };
+}
+
 export default async function ContactPage({ params }: { params: Promise<{ client: string }> }) {
   const { client } = await params;
   const config = await getClient(client);

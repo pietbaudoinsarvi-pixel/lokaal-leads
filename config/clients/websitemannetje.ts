@@ -119,6 +119,12 @@ const config: ClientConfig = {
       "Websitemannetje is een eenmansbedrijf van Piet. De demo wordt gratis gebouwd voordat de klant beslist.",
   },
 
+  seo: {
+    // Sjabloonpagina /websitemannetje is een bijproduct; de echte homepage
+    // staat op / en die is wel indexeerbaar.
+    index: false,
+  },
+
   operational: {
     notifyChannel: kanaal,
     notifyTarget: target,

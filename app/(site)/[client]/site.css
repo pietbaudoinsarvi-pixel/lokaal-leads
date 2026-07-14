@@ -111,6 +111,10 @@
 .hero__actions { display: flex; gap: 1.1rem; flex-wrap: wrap; align-items: center; }
 .hero__call { color: #fff; font-weight: 600; opacity: .95; }
 .hero__call:hover { text-decoration: underline; }
+.hero__rating { display: inline-flex; align-items: center; gap: .5rem; margin-top: 1.4rem; padding: .5rem .95rem; border-radius: 999px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .25); color: #fff; font-size: .9rem; backdrop-filter: blur(4px); }
+.hero__rating span[aria-hidden] { color: #f0a828; letter-spacing: .1em; }
+.hero__rating strong { font-size: 1rem; }
+.hero__rating:hover { background: rgba(0, 0, 0, .5); }
 
 /* USP-strip */
 .usp-strip { background: var(--dark); color: #fff; }

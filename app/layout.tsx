@@ -1,13 +1,8 @@
 import type { ReactNode } from "react";
+import { siteUrl } from "@/lib/site-url";
 
 // metadataBase zorgt dat relatieve OG-afbeeldingen (bv. /photos/...) absolute
 // URL's worden in previews (WhatsApp, iMessage, socials).
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "https://lokaal-leads.vercel.app");
-
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: "Websitemannetje | Websites voor vakmensen",

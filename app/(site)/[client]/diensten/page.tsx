@@ -2,6 +2,17 @@ import { notFound } from "next/navigation";
 import { getClient } from "@/lib/clients";
 import Services from "@/components/site/Services";
 
+export async function generateMetadata({ params }: { params: Promise<{ client: string }> }) {
+  const { client } = await params;
+  const config = await getClient(client);
+  if (!config) return {};
+  return {
+    title: `${config.presentation.services.heading} | ${config.business.name} ${config.business.city}`,
+    description: config.presentation.services.intro,
+    alternates: { canonical: `/${client}/diensten` },
+  };
+}
+
 export default async function DienstenPage({ params }: { params: Promise<{ client: string }> }) {
   const { client } = await params;
   const config = await getClient(client);

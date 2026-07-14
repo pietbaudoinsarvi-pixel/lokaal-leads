@@ -190,6 +190,15 @@ const config: ClientConfig = {
       "De eigenaar heet Jan. Het bedrijf is 6 dagen per week bereikbaar, zondag gesloten.",
   },
 
+  seo: {
+    // De demo is een fictief bedrijf en hoort niet in Google.
+    // Bij een echte klant: index op true (of dit veld weglaten).
+    index: false,
+    schemaType: "HomeAndConstructionBusiness",
+    description:
+      "Hovenier in Utrecht voor tuinaanleg, tuinonderhoud en bestrating. Gratis offerte, reactie binnen 1 werkdag.",
+  },
+
   operational: {
     // Voor de demo melden we naar jezelf (operator); kanaal en nummer/chat_id
     // komen uit env (zie bovenaan dit bestand).

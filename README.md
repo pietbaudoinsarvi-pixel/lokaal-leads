@@ -23,6 +23,9 @@ Live: [lokaal-leads.vercel.app](https://lokaal-leads.vercel.app)
 | Review-verzoek met Google-link uit config, gelogd in `review_requests` | `POST /api/review-request`, `lib/messaging` |
 | Aanleverformulier voor klanten (foto's direct naar Supabase Storage, browser-compressie naar WebP) | `/onboarding`, `app/api/onboarding` |
 | Meldingen via WhatsApp met Telegram-fallback | `lib/notify/whatsapp.ts`, zie `SETUP-WHATSAPP.md` |
+| Klant/demo-generator (config + foto's uit een aanlevering of alleen naam+plaats) | `npm run nieuwe-klant`, `scripts/nieuwe-klant.mjs` |
+| Printbare A5-postkaart met QR naar de demo (voor de legale post-route) | `/print/[client]` |
+| SEO: sitemap, robots.txt, JSON-LD LocalBusiness, canonicals, noindex-vlag per klant | `app/sitemap.ts`, `app/robots.ts`, `config.seo` |
 | Operator-testpagina's | `/lead-test`, `/review-test` |
 
 ## Setup
@@ -52,13 +55,35 @@ en `deliveries` logt `failed`.
 
 ## Een nieuwe klant toevoegen
 
-Kopieer `config/clients/demo-hovenier.ts` naar
-`config/clients/<nieuwe-slug>.ts`, pas de inhoud aan (bedrijfsinfo, kleuren,
-foto's, AI-kennis, `notifyChannel`/`notifyTarget` = kanaal en 06-nummer van
-de klant, `googleReviewLink`) en zet `slug` gelijk aan de bestandsnaam. Meer
-niet: geen code, geen registratie. Foto's laat je de klant aanleveren via
-`/onboarding?bedrijf=Naam`; je krijgt een melding en vindt alles terug in
-Supabase Storage onder `onboarding/<inzending-id>/`.
+**Prospect-demo (verkoop, kost een minuut):**
+
+```
+npm run nieuwe-klant -- --demo "Bedrijfsnaam" "Plaats"
+```
+
+Maakt `config/clients/<slug>.ts` met de naam en plaats van de prospect,
+demo-foto's en voorbeeld-reviews, noindex, meldingen naar jou. Bekijken op
+`/<slug>`, dan `vercel --prod` en de postkaart printen via `/print/<slug>`
+(A5, met QR naar de demo en de verplichte afmeldregel voor geadresseerde
+post).
+
+**Na akkoord (klant heeft `/onboarding?bedrijf=Naam` ingevuld):**
+
+```
+npm run nieuwe-klant -- <submissionId> [slug] --force
+```
+
+Het submissionId staat in de melding op je telefoon. Het script downloadt
+alle foto's naar `public/photos/<slug>/`, en genereert een complete config
+in de gekozen aanspreekvorm (u/je) met de merkkleur uit het formulier en
+automatisch berekende contrastkleuren. Daarna: TODO's in de config nalopen,
+`seo.index` staat aan, `notifyChannel`/`notifyTarget` staan op het
+WhatsApp-nummer van de klant. Er is ook `--lokaal pad/naar/aanlevering.json`
+voor een aanlevering buiten het formulier om.
+
+Handmatig kan ook nog steeds: kopieer `config/clients/demo-hovenier.ts` en
+pas alles aan. Geen code, geen registratie: de sitemap en de site pikken elk
+configbestand automatisch op.
 
 ## Deploy
 

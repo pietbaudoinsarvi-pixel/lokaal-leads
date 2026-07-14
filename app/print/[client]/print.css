@@ -1,0 +1,164 @@
+/* Printbare demo-kaart (A5) voor de post-route: kaart met QR naar de demo,
+   in Websitemannetje-huisstijl. Op het scherm: voorbeeld + printknop. */
+
+.print-shell {
+  --p-navy: #1f4467;
+  --p-navy-dark: #15304b;
+  --p-oranje: #e8762d;
+  --p-oranje-ink: #b8551a;
+  --p-paper: #faf7f2;
+  min-height: 100vh;
+  background: #e8e4dd;
+  font-family: system-ui, sans-serif;
+  color: var(--p-navy-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem 1rem 4rem;
+}
+
+/* Toolbar: alleen op het scherm. */
+.print-toolbar {
+  max-width: 520px;
+  text-align: center;
+}
+.print-toolbar h1 { font-size: 1.3rem; margin: 0 0 .4rem; }
+.print-toolbar p { margin: 0 0 1rem; font-size: .95rem; color: #4a5568; }
+.print-btn {
+  background: var(--p-oranje);
+  color: var(--p-navy-dark);
+  border: 0;
+  border-radius: 8px;
+  padding: .75rem 1.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.print-btn:hover { filter: brightness(1.05); }
+
+/* De kaart zelf: A5 (148 x 210 mm). */
+.kaart {
+  width: 148mm;
+  min-height: 210mm;
+  background: var(--p-paper);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.kaart__kop {
+  background: var(--p-navy);
+  color: #fff;
+  padding: 9mm 11mm;
+}
+.kaart__merk {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: .01em;
+}
+.kaart__merk-mark { font-size: 1.2rem; }
+.kaart__titel {
+  margin: 5mm 0 0;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: -.02em;
+  font-weight: 800;
+}
+.kaart__sub {
+  margin: 3mm 0 0;
+  font-size: .98rem;
+  line-height: 1.5;
+  opacity: .92;
+}
+
+.kaart__body {
+  flex: 1;
+  padding: 8mm 11mm;
+  display: flex;
+  flex-direction: column;
+  gap: 6mm;
+}
+
+.kaart__scan {
+  display: flex;
+  align-items: center;
+  gap: 7mm;
+}
+.kaart__qr {
+  width: 34mm;
+  height: 34mm;
+  flex: 0 0 auto;
+  padding: 3mm;
+  background: #fff;
+  border: 1px solid #d8d2c8;
+  border-radius: 4mm;
+}
+.kaart__qr svg { display: block; width: 100%; height: 100%; }
+.kaart__scan-tekst { font-size: .95rem; line-height: 1.45; }
+.kaart__scan-tekst strong { display: block; font-size: 1.02rem; margin-bottom: 1.5mm; }
+.kaart__url {
+  display: inline-block;
+  margin-top: 2mm;
+  font-weight: 700;
+  color: var(--p-navy);
+  font-size: .92rem;
+  word-break: break-all;
+}
+
+.kaart__punten {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5mm;
+}
+.kaart__punten li {
+  display: flex;
+  gap: 2.5mm;
+  align-items: baseline;
+  font-size: .95rem;
+  line-height: 1.4;
+}
+.kaart__punten .vink { color: var(--p-oranje-ink); font-weight: 800; }
+
+.kaart__prijs {
+  background: #fff;
+  border: 1px solid #e2dcd2;
+  border-radius: 3mm;
+  padding: 4mm 5mm;
+  font-size: .92rem;
+  line-height: 1.45;
+}
+.kaart__prijs strong { color: var(--p-navy); }
+
+.kaart__afzender {
+  margin-top: auto;
+  font-size: .95rem;
+  line-height: 1.5;
+}
+.kaart__afzender strong { display: block; }
+
+.kaart__voet {
+  padding: 4mm 11mm 6mm;
+  font-size: .72rem;
+  line-height: 1.45;
+  color: #6b7280;
+  border-top: 1px solid #e2dcd2;
+}
+
+@media print {
+  .print-shell { background: none; padding: 0; display: block; }
+  .print-toolbar { display: none; }
+  .kaart { box-shadow: none; width: auto; min-height: 100vh; }
+}
+
+@page {
+  size: A5 portrait;
+  margin: 0;
+}

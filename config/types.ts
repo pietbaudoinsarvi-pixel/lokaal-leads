@@ -110,6 +110,17 @@ export interface ClientConfig {
     extraKnowledge?: string;
   };
 
+  // Vindbaarheid. Optioneel: zonder dit blok is de site gewoon indexeerbaar
+  // met de tagline als omschrijving en schema.org-type LocalBusiness.
+  seo?: {
+    // false = site NIET in Google (demo's, sjabloonpagina's). Default true.
+    index?: boolean;
+    // Meta-omschrijving voor Google (max ~155 tekens). Default: tagline.
+    description?: string;
+    // schema.org-type voor de structured data, bv. "HomeAndConstructionBusiness".
+    schemaType?: string;
+  };
+
   // Operationele velden: sturen de backend aan.
   operational: {
     notifyChannel: NotifyChannel;

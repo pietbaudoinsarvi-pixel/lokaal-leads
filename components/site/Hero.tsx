@@ -8,9 +8,10 @@ interface HeroProps {
   phone: string;
   photo?: string;
   eyebrow?: string;
+  reviews?: ClientConfig["presentation"]["reviews"];
 }
 
-export default function Hero({ hero, slug, phone, photo, eyebrow }: HeroProps) {
+export default function Hero({ hero, slug, phone, photo, eyebrow, reviews }: HeroProps) {
   // Full-bleed foto met CSS-scrim (::after) voor leesbaarheid. Ontbreekt het
   // fotobestand, dan valt de hero terug op de thema-gradient.
   const style: CSSProperties | undefined = photo
@@ -28,6 +29,18 @@ export default function Hero({ hero, slug, phone, photo, eyebrow }: HeroProps) {
           <Link href={`/${slug}/contact`} className="btn btn--accent btn--lg">{hero.ctaLabel}</Link>
           {phone && <a href={telHref} className="hero__call">of bel {phone}</a>}
         </div>
+        {reviews?.rating && (
+          <a href="#reviews" className="hero__rating">
+            <span aria-hidden="true">★★★★★</span>
+            <strong>{reviews.rating.toString().replace(".", ",")}</strong>
+            {reviews.count && (
+              <>
+                uit {reviews.count} beoordelingen
+                {reviews.source ? ` op ${reviews.source}` : ""}
+              </>
+            )}
+          </a>
+        )}
       </div>
     </section>
   );

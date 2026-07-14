@@ -3,6 +3,17 @@ import Link from "next/link";
 import { getClient } from "@/lib/clients";
 import About from "@/components/site/About";
 
+export async function generateMetadata({ params }: { params: Promise<{ client: string }> }) {
+  const { client } = await params;
+  const config = await getClient(client);
+  if (!config) return {};
+  return {
+    title: `Over ons | ${config.business.name} ${config.business.city}`,
+    description: config.presentation.about.body.slice(0, 155),
+    alternates: { canonical: `/${client}/over` },
+  };
+}
+
 export default async function OverPage({ params }: { params: Promise<{ client: string }> }) {
   const { client } = await params;
   const config = await getClient(client);
