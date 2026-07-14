@@ -15,6 +15,11 @@ export interface FaqItem {
   a: string;
 }
 
+export interface CtaBlock {
+  heading: string;
+  body: string;
+}
+
 export interface ClientConfig {
   slug: string;
 
@@ -27,12 +32,15 @@ export interface ClientConfig {
     serviceArea: string;
     address?: string;
     kvk?: string;
+    logoMark?: string; // klein merk-teken naast de naam (emoji), niche-neutraal
   };
 
   theme: {
     primary: string; // hex, hoofdkleur
     accent: string; // hex, accentkleur
     dark?: string; // optionele donkere tint
+    onPrimary?: string; // tekstkleur op --primary (contrast), default wit
+    onAccent?: string; // tekstkleur op --accent (contrast), default donker
   };
 
   // Presentatie: alles wat de sjabloon-UI rendert (stap 2).
@@ -56,6 +64,11 @@ export interface ClientConfig {
     contact: {
       heading: string;
       intro: string;
+    };
+    // Call-to-action-banden. Per klant/niche te tekstueel aan te passen.
+    cta: {
+      home: CtaBlock;
+      about: CtaBlock;
     };
     photos: Record<string, string>; // benoemde foto-slots -> url/pad
   };

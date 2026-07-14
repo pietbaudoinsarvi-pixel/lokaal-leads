@@ -10,11 +10,17 @@ interface HeroProps {
 }
 
 export default function Hero({ hero, slug, phone, photo }: HeroProps) {
-  // Foto is optioneel: staat hij er niet, dan valt de hero terug op de
-  // gradient uit de CSS. Als CSS-achtergrond (geen <img>) zodat een
-  // ontbrekend bestand geen kapot plaatje geeft.
+  // Foto aanwezig: een overlay (afgeleid van de themekleur) boven de foto, met
+  // de thema-gradient als laatste laag. Ontbreekt het fotobestand, dan valt de
+  // hero netjes terug op de themekleuren in plaats van een kaal plaatje.
+  // Geen foto: de CSS-gradient uit .hero geldt.
   const style: CSSProperties | undefined = photo
-    ? { backgroundImage: `linear-gradient(135deg, rgba(20,48,31,.74), rgba(20,48,31,.55)), url('${photo}')` }
+    ? {
+        backgroundImage:
+          "linear-gradient(135deg, color-mix(in srgb, var(--dark) 74%, transparent), color-mix(in srgb, var(--dark) 55%, transparent)), " +
+          `url('${photo}'), ` +
+          "linear-gradient(135deg, var(--primary), var(--dark))",
+      }
     : undefined;
   const telHref = `tel:${phone.replace(/[^0-9+]/g, "")}`;
 

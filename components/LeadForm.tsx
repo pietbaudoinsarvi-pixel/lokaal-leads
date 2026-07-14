@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 interface LeadFormProps {
   slug: string;
@@ -14,9 +14,17 @@ type Status = "idle" | "sending" | "ok" | "error";
 export default function LeadForm({ slug }: LeadFormProps) {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
+  const inFlight = useRef(false);
+  const doneRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (status === "ok") doneRef.current?.focus();
+  }, [status]);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (inFlight.current) return; // guard tegen dubbele submit (bv. snel 2x Enter)
+    inFlight.current = true;
     const form = e.currentTarget;
     const data = new FormData(form);
     setStatus("sending");
@@ -44,37 +52,47 @@ export default function LeadForm({ slug }: LeadFormProps) {
     } catch {
       setStatus("error");
       setError("Kon niet verzenden. Controleer uw verbinding en probeer het opnieuw.");
+    } finally {
+      inFlight.current = false;
     }
   }
 
-  if (status === "ok") {
-    return (
-      <div className="lead-form lead-form--done" role="status">
-        <h3>Bedankt voor uw aanvraag!</h3>
-        <p>Wij hebben uw gegevens ontvangen en bellen u binnen een werkdag terug.</p>
-      </div>
-    );
-  }
-
   return (
-    <form className="lead-form" onSubmit={submit} noValidate>
-      <label className="field">
-        <span>Naam</span>
-        <input name="name" required autoComplete="name" placeholder="Uw naam" />
-      </label>
-      <label className="field">
-        <span>Telefoonnummer</span>
-        <input name="phone" required type="tel" inputMode="tel" autoComplete="tel" placeholder="06 12 34 56 78" />
-      </label>
-      <label className="field">
-        <span>Uw vraag (optioneel)</span>
-        <textarea name="message" rows={4} placeholder="Vertel kort waar u ons voor nodig heeft." />
-      </label>
-      {status === "error" && <p className="lead-form__error" role="alert">{error}</p>}
-      <button type="submit" className="btn btn--accent btn--block" disabled={status === "sending"}>
-        {status === "sending" ? "Versturen..." : "Aanvraag versturen"}
-      </button>
-      <p className="lead-form__note">Wij bellen u binnen een werkdag terug. Geheel vrijblijvend.</p>
-    </form>
+    <div className="lead-form-wrap">
+      {/* Permanent gemonteerde live region zodat de succesmelding betrouwbaar
+          door screenreaders wordt aangekondigd. */}
+      <p className="sr-only" aria-live="polite" role="status">
+        {status === "ok"
+          ? "Bedankt, uw aanvraag is verstuurd. Wij bellen u binnen een werkdag terug."
+          : ""}
+      </p>
+
+      {status === "ok" ? (
+        <div className="lead-form lead-form--done" ref={doneRef} tabIndex={-1}>
+          <h3>Bedankt voor uw aanvraag!</h3>
+          <p>Wij hebben uw gegevens ontvangen en bellen u binnen een werkdag terug.</p>
+        </div>
+      ) : (
+        <form className="lead-form" onSubmit={submit}>
+          <label className="field">
+            <span>Naam</span>
+            <input name="name" required autoComplete="name" placeholder="Uw naam" />
+          </label>
+          <label className="field">
+            <span>Telefoonnummer</span>
+            <input name="phone" required type="tel" inputMode="tel" autoComplete="tel" placeholder="06 12 34 56 78" />
+          </label>
+          <label className="field">
+            <span>Uw vraag (optioneel)</span>
+            <textarea name="message" rows={4} placeholder="Vertel kort waar u ons voor nodig heeft." />
+          </label>
+          {status === "error" && <p className="lead-form__error" role="alert">{error}</p>}
+          <button type="submit" className="btn btn--accent btn--block" disabled={status === "sending"}>
+            {status === "sending" ? "Versturen..." : "Aanvraag versturen"}
+          </button>
+          <p className="lead-form__note">Wij bellen u binnen een werkdag terug. Geheel vrijblijvend.</p>
+        </form>
+      )}
+    </div>
   );
 }

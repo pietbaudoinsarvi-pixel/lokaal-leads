@@ -21,8 +21,8 @@ export default async function OverPage({ params }: { params: Promise<{ client: s
       <About about={p.about} photo={p.photos[p.about.imageSlot]} hideHead alt={false} />
       <section className="cta-band">
         <div className="container cta-band__inner">
-          <h2>Benieuwd wat wij voor uw tuin kunnen doen?</h2>
-          <p>Neem contact op voor een vrijblijvend gesprek.</p>
+          <h2>{p.cta.about.heading}</h2>
+          <p>{p.cta.about.body}</p>
           <Link href={`/${config.slug}/contact`} className="btn btn--accent btn--lg">
             {p.hero.ctaLabel}
           </Link>

@@ -24,8 +24,8 @@ export default async function HomePage({ params }: { params: Promise<{ client: s
       <About about={p.about} photo={p.photos[p.about.imageSlot]} />
       <section className="cta-band">
         <div className="container cta-band__inner">
-          <h2>Klaar voor een tuin om trots op te zijn?</h2>
-          <p>Vraag vrijblijvend een offerte aan. Wij bellen u binnen een werkdag terug.</p>
+          <h2>{p.cta.home.heading}</h2>
+          <p>{p.cta.home.body}</p>
           <Link href={`/${config.slug}/contact`} className="btn btn--accent btn--lg">
             {p.hero.ctaLabel}
           </Link>

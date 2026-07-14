@@ -14,12 +14,15 @@ const config: ClientConfig = {
     city: "Utrecht",
     serviceArea: "Utrecht en omstreken (straal 25 km)",
     kvk: "12345678",
+    logoMark: "🌿",
   },
 
   theme: {
     primary: "#2F7D4F",
     accent: "#C7A45A",
     dark: "#14301F",
+    onPrimary: "#FFFFFF",
+    onAccent: "#2A2410",
   },
 
   presentation: {
@@ -67,6 +70,16 @@ const config: ClientConfig = {
     contact: {
       heading: "Vraag een vrijblijvende offerte aan",
       intro: "Laat uw gegevens achter en wij bellen u binnen een werkdag terug.",
+    },
+    cta: {
+      home: {
+        heading: "Klaar voor een tuin om trots op te zijn?",
+        body: "Vraag vrijblijvend een offerte aan. Wij bellen u binnen een werkdag terug.",
+      },
+      about: {
+        heading: "Benieuwd wat wij voor uw tuin kunnen doen?",
+        body: "Neem contact op voor een vrijblijvend gesprek.",
+      },
     },
     photos: {
       hero: "/photos/demo-hovenier/hero.jpg",

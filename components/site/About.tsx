@@ -9,7 +9,12 @@ interface AboutProps {
 }
 
 export default function About({ about, photo, hideHead = false, alt = true }: AboutProps) {
-  const media: CSSProperties | undefined = photo ? { backgroundImage: `url('${photo}')` } : undefined;
+  // Foto over de thema-gradient; ontbreekt het bestand, dan blijft de gradient staan.
+  const media: CSSProperties | undefined = photo
+    ? {
+        backgroundImage: `url('${photo}'), linear-gradient(135deg, color-mix(in srgb, var(--primary) 78%, #000), var(--dark))`,
+      }
+    : undefined;
   return (
     <section className={`section ${alt ? "section--alt" : ""}`} id="over">
       <div className="container about">

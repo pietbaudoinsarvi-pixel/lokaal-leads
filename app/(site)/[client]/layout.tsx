@@ -31,13 +31,26 @@ export default async function SiteLayout({
     "--primary": config.theme.primary,
     "--accent": config.theme.accent,
     "--dark": config.theme.dark ?? "#14301f",
+    "--on-primary": config.theme.onPrimary ?? "#ffffff",
+    "--on-accent": config.theme.onAccent ?? "#2a2410",
   } as CSSProperties;
 
   return (
     <div className="site-shell" style={themeVars}>
-      <Header businessName={config.business.name} phone={config.business.phone} slug={config.slug} />
-      <main>{children}</main>
-      <Footer business={config.business} slug={config.slug} year={new Date().getFullYear()} />
+      <a href="#main" className="skip-link">Naar inhoud</a>
+      <Header
+        businessName={config.business.name}
+        phone={config.business.phone}
+        slug={config.slug}
+        logoMark={config.business.logoMark}
+      />
+      <main id="main">{children}</main>
+      <Footer
+        business={config.business}
+        slug={config.slug}
+        year={new Date().getFullYear()}
+        logoMark={config.business.logoMark}
+      />
     </div>
   );
 }

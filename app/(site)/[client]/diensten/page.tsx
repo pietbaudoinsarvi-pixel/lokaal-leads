@@ -13,7 +13,7 @@ export default async function DienstenPage({ params }: { params: Promise<{ clien
     <>
       <section className="page-hero">
         <div className="container">
-          <span className="page-hero__eyebrow">{config.business.city} en omstreken</span>
+          <span className="page-hero__eyebrow">{config.business.city}</span>
           <h1>{p.services.heading}</h1>
           <p>{p.services.intro}</p>
         </div>
