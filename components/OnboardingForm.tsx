@@ -22,12 +22,28 @@ const MAX_SIZE = 15 * 1024 * 1024; // na verkleinen
 const MAX_ORIGINEEL = 60 * 1024 * 1024; // harde bovengrens op het origineel
 const MAX_TEGELIJK = 3;
 
-// Foto's vóór het uploaden in de browser verkleinen: telefoontfoto's van
-// 4-8 MB worden ~1 MB zonder zichtbaar kwaliteitsverlies voor webgebruik.
-// Zo blijven 60 foto's uploaden vlot op mobiel en blijft de opslag klein.
-// Lukt decoderen niet (exotisch formaat), dan gaat het origineel door.
+// Foto's vóór het uploaden in de browser verkleinen en omzetten naar WebP:
+// telefoontfoto's van 4-8 MB worden zo een paar honderd KB zonder zichtbaar
+// kwaliteitsverlies, en WebP is precies het formaat dat de klant-sites zelf
+// serveren (direct bruikbaar dus). Safari kan geen WebP encoderen en valt
+// automatisch terug op JPEG. Lukt decoderen helemaal niet (exotisch
+// formaat), dan gaat het origineel door.
 const MAX_AFMETING = 2560; // langste zijde in pixels
-const JPEG_KWALITEIT = 0.85;
+const BEELD_KWALITEIT = 0.85;
+
+function naarBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  kwaliteit: number,
+): Promise<Blob | null> {
+  return new Promise<Blob | null>((res) =>
+    canvas.toBlob(res, type, kwaliteit),
+  ).then((blob) =>
+    // Browsers die het type niet kunnen encoderen vallen stil terug op PNG;
+    // dat merken we hier en behandelen we als "niet gelukt".
+    blob && blob.type === type ? blob : null,
+  );
+}
 
 async function comprimeer(
   file: File,
@@ -37,8 +53,6 @@ async function comprimeer(
     type: file.type || "image/jpeg",
     name: file.name,
   };
-  // Klein genoeg: niet aankomen.
-  if (file.size < 700 * 1024) return origineel;
   try {
     const bitmap = await createImageBitmap(file, {
       imageOrientation: "from-image",
@@ -56,15 +70,16 @@ async function comprimeer(
     if (!ctx) return origineel;
     ctx.drawImage(bitmap, 0, 0, w, h);
     bitmap.close();
-    const blob = await new Promise<Blob | null>((res) =>
-      canvas.toBlob(res, "image/jpeg", JPEG_KWALITEIT),
-    );
+
+    const basis = file.name.replace(/\.[^.]+$/, "");
+    let blob = await naarBlob(canvas, "image/webp", BEELD_KWALITEIT);
+    let naam = `${basis}.webp`;
+    if (!blob) {
+      blob = await naarBlob(canvas, "image/jpeg", BEELD_KWALITEIT);
+      naam = `${basis}.jpg`;
+    }
     if (blob && blob.size < file.size) {
-      return {
-        blob,
-        type: "image/jpeg",
-        name: file.name.replace(/\.[^.]+$/, "") + ".jpg",
-      };
+      return { blob, type: blob.type, name: naam };
     }
     return origineel;
   } catch {
