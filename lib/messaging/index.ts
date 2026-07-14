@@ -1,6 +1,7 @@
 import type { MessageChannel, MessageSender } from "./types";
 import { TelegramMessageSender } from "./telegram";
-import { SmsMessageSender, WhatsAppMessageSender } from "./stubs";
+import { WhatsAppMessageSender } from "./whatsapp";
+import { SmsMessageSender } from "./stubs";
 
 export function getMessageSender(channel: MessageChannel): MessageSender {
   switch (channel) {

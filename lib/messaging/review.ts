@@ -21,7 +21,10 @@ export async function sendReviewRequest(params: {
   const { client, phone, channel } = params;
   const text = buildReviewMessage(client);
   const sender = getMessageSender(channel);
-  const res = await sender.send(phone, text);
+  const res = await sender.send(phone, text, {
+    businessName: client.business.name,
+    reviewLink: client.operational.googleReviewLink,
+  });
   const status: "sent" | "failed" = res.ok ? "sent" : "failed";
 
   // Elk verzoek wordt gelogd, geslaagd of niet.

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/db/client";
-import { TelegramNotifier } from "@/lib/notify/telegram";
+import { notifyOperator } from "@/lib/notify/operator";
 import { clientIp, rateLimit } from "@/lib/util/ratelimit";
 
 // Ontvangt het ingevulde aanleverformulier. De foto's staan op dit moment al
@@ -136,12 +136,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Operator-melding, synchroon met 1 retry. Falen breekt de request niet:
-    // de inzending staat al veilig in Storage. Alle gebruikersinvoer gaat
-    // door line() zodat er geen vervalste regels geinjecteerd kunnen worden.
-    const operatorChatId = (process.env.OPERATOR_TELEGRAM_CHAT_ID ?? "")
-      .replace(/^﻿/, "")
-      .trim();
+    // Operator-melding, synchroon met retry (via notifyOperator: WhatsApp
+    // eerst indien geconfigureerd, anders Telegram). Falen breekt de request
+    // niet: de inzending staat al veilig in Storage. Alle gebruikersinvoer
+    // gaat door line() zodat er geen vervalste regels geinjecteerd worden.
     const text = [
       `📥 Nieuwe aanlevering: ${line(bedrijf.naam)}`,
       ``,
@@ -154,14 +152,9 @@ export async function POST(req: NextRequest) {
       `Alles staat in Supabase Storage: ${BUCKET}/${submissionId}/`,
     ].join("\n");
 
-    let delivered = false;
-    const notifier = new TelegramNotifier();
-    for (let i = 0; i < 2 && !delivered; i++) {
-      const res = await notifier.send(operatorChatId, text);
-      delivered = res.ok;
-    }
+    const melding = await notifyOperator(text);
 
-    return NextResponse.json({ ok: true, delivered });
+    return NextResponse.json({ ok: true, delivered: melding.ok });
   } catch (e) {
     console.error("onboarding: onverwachte fout:", e);
     return NextResponse.json(

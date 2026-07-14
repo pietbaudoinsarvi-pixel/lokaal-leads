@@ -24,9 +24,11 @@ export async function POST(req: Request) {
 
   const clientSlug = (body.clientSlug ?? "").trim();
   const phone = (body.phone ?? "").trim();
+  // WhatsApp is het standaardkanaal; zolang de Cloud API niet is ingesteld
+  // valt de WhatsApp-sender zelf terug op een melding aan de operator.
   const channel: MessageChannel = CHANNELS.includes(body.channel as MessageChannel)
     ? (body.channel as MessageChannel)
-    : "telegram";
+    : "whatsapp";
 
   if (!clientSlug) {
     return NextResponse.json({ ok: false, error: "clientSlug is verplicht." }, { status: 400 });

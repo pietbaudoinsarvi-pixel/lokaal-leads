@@ -1,7 +1,7 @@
 import type { ClientConfig } from "@/config/types";
 import { logDelivery } from "@/lib/db/queries";
 import { getNotifier } from "./index";
-import { TelegramNotifier } from "./telegram";
+import { notifyOperator } from "./operator";
 import type { LeadNotification } from "./types";
 
 function formatLeadMessage(lead: LeadNotification): string {
@@ -64,15 +64,13 @@ export async function dispatchLeadNotification(params: {
   return { delivered: false };
 }
 
-// Vangnet naar de operator (jij), altijd via Telegram, ongeacht het klant-kanaal.
+// Vangnet naar de operator (jij), via WhatsApp of Telegram (wat werkt),
+// ongeacht het klant-kanaal.
 async function alertOperator(
   client: ClientConfig,
   lead: LeadNotification,
   error?: string,
 ): Promise<void> {
-  const operatorChatId = process.env.OPERATOR_TELEGRAM_CHAT_ID?.replace(/^﻿/, "").trim();
-  if (!operatorChatId) return;
-
   const text = [
     `⚠️ Lead-melding FAALDE voor ${client.slug} (${client.business.name})`,
     ``,
@@ -85,7 +83,7 @@ async function alertOperator(
   ].join("\n");
 
   try {
-    await new TelegramNotifier().send(operatorChatId, text);
+    await notifyOperator(text);
   } catch {
     // Laatste vangnet mag de request nooit breken.
   }

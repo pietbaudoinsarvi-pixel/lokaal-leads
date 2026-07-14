@@ -1,7 +1,8 @@
 import type { NotifyChannel } from "@/config/types";
 import type { Notifier } from "./types";
 import { TelegramNotifier } from "./telegram";
-import { WhatsAppNotifier, SmsNotifier, EmailNotifier } from "./stubs";
+import { WhatsAppNotifier } from "./whatsapp";
+import { SmsNotifier, EmailNotifier } from "./stubs";
 
 // Kiest de juiste notifier op basis van het kanaal uit de klant-config.
 export function getNotifier(channel: NotifyChannel): Notifier {

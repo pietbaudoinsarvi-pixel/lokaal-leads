@@ -1,8 +1,20 @@
-import type { ClientConfig } from "../types";
+import type { ClientConfig, NotifyChannel } from "../types";
 
 // Demo-klant. Realistische placeholder-content voor een NL-hovenier.
 // Vervang dit later door een echte prospect (of kopieer dit bestand naar
 // een nieuwe slug voor een nieuwe klant).
+
+// Meldkanaal via env: zet NOTIFY_CHANNEL=whatsapp (+ zie SETUP-WHATSAPP.md)
+// en alle demo-meldingen lopen via WhatsApp; anders Telegram. Bij een echte
+// klant zet je hier letterlijk "whatsapp" + het 06-nummer van de klant.
+const kanaal: NotifyChannel =
+  (process.env.NOTIFY_CHANNEL ?? "").replace(/^﻿/, "").trim().toLowerCase() === "whatsapp"
+    ? "whatsapp"
+    : "telegram";
+const target =
+  kanaal === "whatsapp"
+    ? (process.env.OPERATOR_WHATSAPP_NUMBER ?? "").replace(/^﻿/, "").trim()
+    : (process.env.OPERATOR_TELEGRAM_CHAT_ID ?? "").replace(/^﻿/, "").trim();
 const config: ClientConfig = {
   slug: "demo-hovenier",
 
@@ -179,10 +191,10 @@ const config: ClientConfig = {
   },
 
   operational: {
-    notifyChannel: "telegram",
-    // Voor de demo melden we naar jezelf, dus hergebruiken we je operator chat_id.
-    // Bij een echte klant zet je hier een letterlijke chat_id of telefoonnummer.
-    notifyTarget: (process.env.OPERATOR_TELEGRAM_CHAT_ID ?? "").replace(/^﻿/, "").trim(),
+    // Voor de demo melden we naar jezelf (operator); kanaal en nummer/chat_id
+    // komen uit env (zie bovenaan dit bestand).
+    notifyChannel: kanaal,
+    notifyTarget: target,
     googleReviewLink: "https://g.page/r/PLAATS-HIER-DE-REVIEW-LINK/review",
   },
 };

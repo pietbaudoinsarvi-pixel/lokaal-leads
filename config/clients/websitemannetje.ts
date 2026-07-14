@@ -1,9 +1,20 @@
-import type { ClientConfig } from "../types";
+import type { ClientConfig, NotifyChannel } from "../types";
 
 // Config voor het eigen merk. Bestaat vooral zodat het demo-aanvraagformulier
 // op de homepage dezelfde lead-pijplijn gebruikt als klant-sites (event ->
-// dedup -> Telegram-melding). De sjabloonpagina /websitemannetje is een
-// onbelangrijk bijproduct en wordt nergens gelinkt.
+// dedup -> melding). De sjabloonpagina /websitemannetje is een onbelangrijk
+// bijproduct en wordt nergens gelinkt.
+
+// Zelfde env-schakelaar als demo-hovenier: NOTIFY_CHANNEL=whatsapp schakelt
+// alle meldingen om (zie SETUP-WHATSAPP.md).
+const kanaal: NotifyChannel =
+  (process.env.NOTIFY_CHANNEL ?? "").replace(/^﻿/, "").trim().toLowerCase() === "whatsapp"
+    ? "whatsapp"
+    : "telegram";
+const target =
+  kanaal === "whatsapp"
+    ? (process.env.OPERATOR_WHATSAPP_NUMBER ?? "").replace(/^﻿/, "").trim()
+    : (process.env.OPERATOR_TELEGRAM_CHAT_ID ?? "").replace(/^﻿/, "").trim();
 const config: ClientConfig = {
   slug: "websitemannetje",
 
@@ -109,8 +120,8 @@ const config: ClientConfig = {
   },
 
   operational: {
-    notifyChannel: "telegram",
-    notifyTarget: (process.env.OPERATOR_TELEGRAM_CHAT_ID ?? "").replace(/^﻿/, "").trim(),
+    notifyChannel: kanaal,
+    notifyTarget: target,
     googleReviewLink: "https://g.page/r/PLAATS-HIER-DE-REVIEW-LINK/review",
   },
 };

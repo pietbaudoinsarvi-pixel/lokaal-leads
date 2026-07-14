@@ -10,9 +10,20 @@ export async function generateMetadata({ params }: { params: Promise<{ client: s
   const { client } = await params;
   const config = await getClient(client);
   if (!config) return { title: "Pagina niet gevonden" };
+  const heroFoto = config.presentation.photos[config.presentation.hero.imageSlot];
   return {
     title: `${config.business.name} | ${config.business.city}`,
     description: config.business.tagline,
+    // Open Graph: zo toont een link die je (bv. via WhatsApp) naar een
+    // prospect stuurt meteen een nette preview met foto en bedrijfsnaam.
+    openGraph: {
+      title: `${config.business.name} | ${config.business.city}`,
+      description: config.business.tagline,
+      type: "website",
+      locale: "nl_NL",
+      siteName: config.business.name,
+      ...(heroFoto ? { images: [{ url: heroFoto }] } : {}),
+    },
   };
 }
 

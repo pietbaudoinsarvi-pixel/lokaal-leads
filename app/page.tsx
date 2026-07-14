@@ -6,6 +6,13 @@ import "./agency.css";
 export const metadata = {
   title: `${agency.name} | ${agency.tagline}`,
   description: agency.metaDescription,
+  openGraph: {
+    title: `${agency.name} | ${agency.tagline}`,
+    description: agency.metaDescription,
+    type: "website",
+    locale: "nl_NL",
+    siteName: agency.name,
+  },
 };
 
 export default function AgencyHome() {

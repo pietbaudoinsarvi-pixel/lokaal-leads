@@ -1,102 +1,93 @@
-# Lokaal Leads
+# Websitemannetje (repo: lokaal-leads)
 
-Geproductiseerde websites met een slimme backend voor lokale bedrijven (start-niche: hoveniers). De website is de haak; de waarde zit in de backend: elke lead komt direct als melding op de telefoon van de eigenaar.
+Geproductiseerde websites met een slimme backend voor lokale vakmensen
+(start-niche: hoveniers). De website is de haak; de waarde zit in de
+backend: elke aanvraag komt direct als melding op de telefoon van de
+eigenaar, en na elke klus gaat er automatisch een Google-review-verzoek uit.
 
-**Kern-principe:** er is EEN niche-sjabloon en per klant alleen een configbestand. Een nieuwe klant toevoegen = een nieuw bestand in `/config/clients/<slug>.ts`. Nooit nieuwe paginacode of layout per klant.
+**Kern-principe:** er is EEN niche-sjabloon en per klant alleen een
+configbestand. Een nieuwe klant toevoegen = een nieuw bestand in
+`/config/clients/<slug>.ts`. Nooit nieuwe paginacode of layout per klant.
 
-## Wat er nu is (stap 1)
+Live: [lokaal-leads.vercel.app](https://lokaal-leads.vercel.app)
+(eigen merk-site) en `/demo-hovenier` (klant-demo).
 
-De volledige lead-pijplijn, end-to-end testbaar:
+## Wat er is (alles werkend en live)
 
-- `POST /api/lead` maakt een **event** (idempotent), leidt daaruit een **lead** af, en stuurt **synchroon** een Telegram-melding met een retry.
-- Elke meldingspoging wordt gelogd in `deliveries`. Faalt de melding definitief, dan wordt de lead alsnog bewaard en krijg jij (de operator) een alert.
-- Een testpagina op `/lead-test` en een curl-voorbeeld hieronder.
-
-De hovenier-sjabloonsite (stap 2), de AI-chat (stap 3) en de review-request (stap 4) volgen daarna.
+| Onderdeel | Waar |
+|---|---|
+| Eigen merk-site (Websitemannetje) met ingebedde demo en demo-aanvraagformulier | `/` (content in `config/agency.ts`) |
+| Klant-sjabloonsite uit config (home, diensten, over, contact + reviews, werkwijze, FAQ) | `/[client]`, componenten in `components/site` |
+| Lead-pijplijn: event (idempotent) -> lead -> synchrone melding met retry + operator-alert | `POST /api/lead`, `lib/leads`, `lib/notify` |
+| AI-chatwidget (server-side Claude, streaming, capture_lead naar dezelfde pijplijn) | `POST /api/chat`, `components/ChatWidget.tsx` |
+| Review-verzoek met Google-link uit config, gelogd in `review_requests` | `POST /api/review-request`, `lib/messaging` |
+| Aanleverformulier voor klanten (foto's direct naar Supabase Storage, browser-compressie naar WebP) | `/onboarding`, `app/api/onboarding` |
+| Meldingen via WhatsApp met Telegram-fallback | `lib/notify/whatsapp.ts`, zie `SETUP-WHATSAPP.md` |
+| Operator-testpagina's | `/lead-test`, `/review-test` |
 
 ## Setup
 
-### 1. Dependencies
+1. `npm install`
+2. **Supabase:** project aanmaken, `supabase/schema.sql` uitvoeren in de SQL
+   Editor. De storage-bucket `onboarding` maakt de app zelf aan.
+3. **Meldkanaal:** WhatsApp instellen volgens `SETUP-WHATSAPP.md`
+   (quick-start of Meta Cloud API), of Telegram: bot via @BotFather,
+   chat_id via @userinfobot.
+4. `cp .env.example .env.local` en vullen:
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `ANTHROPIC_API_KEY` (AI-chat), optioneel `ANTHROPIC_MODEL`
+   - Telegram: `TELEGRAM_BOT_TOKEN`, `OPERATOR_TELEGRAM_CHAT_ID`
+   - WhatsApp: zie `SETUP-WHATSAPP.md` (`NOTIFY_CHANNEL=whatsapp`,
+     `OPERATOR_WHATSAPP_NUMBER`, en Cloud API- of CallMeBot-vars)
+5. `npm run dev` en testen: `/lead-test` hoort binnen seconden een melding
+   op je telefoon te geven.
 
-```bash
-npm install
-```
+**Idempotentie testen:** dezelfde lead twee keer snel versturen geeft de
+tweede keer `{"ok":true,"duplicate":true}` zonder tweede melding
+(5-minuten-venster).
 
-### 2. Supabase
-
-1. Maak een project op [supabase.com](https://supabase.com).
-2. Open de **SQL Editor** en plak/voer `supabase/schema.sql` uit.
-3. Ga naar **Project Settings > API** en noteer de **Project URL** en de **`service_role`** key (onder "Project API keys"). De service-role-key is geheim en alleen server-side.
-
-### 3. Telegram-bot
-
-1. Open Telegram, start een chat met **@BotFather**, stuur `/newbot` en volg de stappen. Je krijgt een **bot-token**.
-2. Stuur je nieuwe bot zelf een berichtje (bv. "hoi"), zodat er een chat bestaat.
-3. Haal je **chat_id** op. Twee makkelijke manieren:
-   - Stuur een bericht aan **@userinfobot**; die antwoordt met je numerieke id, of
-   - Open in je browser `https://api.telegram.org/bot<JOUW_TOKEN>/getUpdates` en zoek `"chat":{"id":...}`.
-
-### 4. Env
-
-```bash
-cp .env.example .env.local
-```
-
-Vul in: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `OPERATOR_TELEGRAM_CHAT_ID`. (Voor de demo is `OPERATOR_TELEGRAM_CHAT_ID` ook het notify-target van `demo-hovenier`, dus je hoeft verder niets in de config te zetten.) `ANTHROPIC_*` is pas nodig vanaf stap 3.
-
-### 5. Draaien en testen
-
-```bash
-npm run dev
-```
-
-- Open `http://localhost:3000/lead-test`, vul in en verstuur. **Verwacht: binnen enkele seconden een Telegram-melding.**
-- Of via curl (Git Bash):
-
-  ```bash
-  curl -X POST http://localhost:3000/api/lead \
-    -H "content-type: application/json" \
-    -d '{"clientSlug":"demo-hovenier","name":"Test Klant","phone":"+31612345678","message":"Offerte graag","source":"form"}'
-  ```
-
-- Of via PowerShell:
-
-  ```powershell
-  Invoke-RestMethod -Uri http://localhost:3000/api/lead -Method Post -ContentType 'application/json' `
-    -Body '{"clientSlug":"demo-hovenier","name":"Test Klant","phone":"+31612345678","message":"Offerte graag","source":"form"}'
-  ```
-
-**Idempotentie testen:** verstuur twee keer snel achter elkaar dezelfde gegevens. De tweede keer geeft `{"ok":true,"duplicate":true}` en stuurt **geen** tweede melding (5-minuten-venster).
-
-**Melding-fallback testen:** zet een verkeerde `TELEGRAM_BOT_TOKEN`, verstuur een lead. De response blijft `ok:true` (lead niet verloren), `deliveries` bevat een `failed`-rij. Zet je token terug voor de operator-alert.
+**Fallback testen:** zet een kapot WhatsApp-token; de melding komt dan via
+Telegram. Kapot allebei? De response blijft `ok:true` (lead nooit verloren)
+en `deliveries` logt `failed`.
 
 ## Een nieuwe klant toevoegen
 
-Kopieer `config/clients/demo-hovenier.ts` naar `config/clients/<nieuwe-slug>.ts`, pas de inhoud aan (bedrijfsinfo, kleuren, foto-slots, AI-kennis, `notifyTarget`, `googleReviewLink`) en zet `slug` gelijk aan de bestandsnaam. Meer niet: geen code, geen registratie. De backend en (vanaf stap 2) de site pikken de klant automatisch op via `getClient(slug)`.
+Kopieer `config/clients/demo-hovenier.ts` naar
+`config/clients/<nieuwe-slug>.ts`, pas de inhoud aan (bedrijfsinfo, kleuren,
+foto's, AI-kennis, `notifyChannel`/`notifyTarget` = kanaal en 06-nummer van
+de klant, `googleReviewLink`) en zet `slug` gelijk aan de bestandsnaam. Meer
+niet: geen code, geen registratie. Foto's laat je de klant aanleveren via
+`/onboarding?bedrijf=Naam`; je krijgt een melding en vindt alles terug in
+Supabase Storage onder `onboarding/<inzending-id>/`.
 
-## Deploy naar Vercel
+## Deploy
 
-1. Push de repo naar GitHub/GitLab.
-2. Importeer in Vercel als Next.js-project.
-3. Zet dezelfde env-variabelen als in `.env.local` onder **Settings > Environment Variables**.
-4. Deploy. Test `/lead-test` op de productie-URL.
+Handmatig: `vercel --prod` (de Vercel-GitHub-koppeling voor auto-deploy
+staat nog open). Env-vars staan in Vercel onder Settings > Environment
+Variables; let op de BOM-gotcha hieronder.
 
-## Architectuur (stap 1)
+## Architectuur-principes
 
 1. **Alles wordt eerst een event.** Melding en CRM-record komen uit dezelfde bron.
-2. **Idempotentie** via een `dedup_key` (hash van klant + telefoon + bericht + 5-min-venster) met een unieke constraint op `(client_slug, dedup_key)`.
-3. **Melding is synchroon** in dezelfde request (poging + 1 retry), nooit via polling. Elke poging in `deliveries`.
-4. **Notifier is een interface** (`lib/notify`). Telegram is volledig; WhatsApp/SMS/Email zijn stubs met TODO. Welk kanaal draait, bepaalt `notify_channel` in de klant-config.
-5. **Config is de bron van waarheid per klant** (`/config/clients`). Supabase bevat alleen runtime-data per `client_slug`.
+2. **Idempotentie** via `dedup_key` (hash van klant + telefoon + bericht + 5-min-venster).
+3. **Melding is synchroon** in dezelfde request (poging + retry), gelogd in `deliveries`. Faalt alles, dan operator-alert; de request geeft altijd succes terug zodat er nooit een lead verloren gaat.
+4. **Notifier en MessageSender zijn interfaces** (`lib/notify`, `lib/messaging`). WhatsApp (Meta Cloud API of CallMeBot) en Telegram zijn echt; SMS/e-mail zijn stubs. Kanaal per klant via config, operator-kanaal via env.
+5. **Config is de bron van waarheid per klant** (`/config/clients`); eigen merk-content in `config/agency.ts`. Supabase bevat alleen runtime-data per `client_slug`.
 
-## Nog niet gebouwd (TODO, later)
+## Gotcha's
 
-- Stap 2: hovenier-sjabloon (`/components/site` + `/app/(site)/[client]`) dat de demo uit config rendert, met `LeadForm`.
-- Stap 3: AI-chat (`/app/api/chat` + `ChatWidget`), system prompt uit config, kan lead capturen naar `/api/lead`.
-- Stap 4: `/app/api/review-request` stuurt de Google-review-link uit config en logt `review_requests`.
-- Missed-call-text-back / telefonie (Bird of Twilio, nieuw NL-nummer).
+- **PowerShell BOM:** PowerShell 5.1 plakt een BOM (U+FEFF) voor waarden bij
+  `vercel env add` via een pipe. Alle env-reads in de code strippen die,
+  maar zet env-vars het liefst via het Vercel-dashboard.
+- **Supabase keys:** nieuwe vorm `sb_secret_...` (server) en
+  `sb_publishable_...` (client); `SUPABASE_URL` is de kale
+  `https://<ref>.supabase.co` zonder `/rest/v1/`.
+
+## Nog niet gebouwd (bewust)
+
+- SMS (Bird/Twilio) en e-mail als meldkanalen (stubs staan klaar).
+- Missed-call-text-back / telefonie.
 - Google Business Profile API (reviews teruglezen).
-- WhatsApp Business API-templates (approval-doorlooptijd).
-- Mollie / facturatie.
-- PWA unified inbox.
-- Multi-tenant auth, self-service, no-code builder, online boeken.
+- Mollie / facturatie, PWA unified inbox.
+- Multi-tenant auth, self-service, no-code builder, online boeken: NIET de
+  bedoeling (operator-model).

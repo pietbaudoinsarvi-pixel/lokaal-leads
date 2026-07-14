@@ -34,9 +34,9 @@ export default function ReviewTest() {
     <main style={{ maxWidth: 480, margin: "3rem auto", padding: "0 1rem" }}>
       <h1>Review-verzoek testen</h1>
       <p>
-        Stuurt de Google-review-link uit de klant-config. Zolang er nog geen
-        SMS/WhatsApp-provider is, komt het verzoek (ter demo) op je Telegram
-        binnen, met het klantnummer erbij.
+        Stuurt de Google-review-link uit de klant-config. Met de WhatsApp
+        Cloud API ingesteld gaat het verzoek echt naar het klantnummer;
+        anders komt het bij jou (operator) binnen om door te sturen.
       </p>
       <form onSubmit={submit} style={{ display: "grid", gap: "0.75rem" }}>
         <label>
@@ -49,10 +49,10 @@ export default function ReviewTest() {
         </label>
         <label>
           Kanaal
-          <select name="channel" defaultValue="telegram" style={input}>
-            <option value="telegram">Telegram (werkt nu)</option>
+          <select name="channel" defaultValue="whatsapp" style={input}>
+            <option value="whatsapp">WhatsApp (standaard)</option>
+            <option value="telegram">Telegram (via operator)</option>
             <option value="sms">SMS (stub, TODO)</option>
-            <option value="whatsapp">WhatsApp (stub, TODO)</option>
           </select>
         </label>
         <button type="submit" disabled={loading} style={{ padding: "0.6rem", fontWeight: 600 }}>

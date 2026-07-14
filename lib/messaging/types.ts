@@ -7,9 +7,16 @@ export interface MessageResult {
   error?: string;
 }
 
+// Structurele velden voor kanalen die met goedgekeurde templates werken
+// (WhatsApp): daar mag de tekst niet vrij zijn, maar wel de parameters.
+export interface MessageContext {
+  businessName: string;
+  reviewLink: string;
+}
+
 export interface MessageSender {
   readonly channel: MessageChannel;
-  // `to` is het telefoonnummer van de klant. Zie TelegramMessageSender voor de
-  // huidige stub-afhandeling zolang we nog geen SMS/WhatsApp-provider hebben.
-  send(to: string, text: string): Promise<MessageResult>;
+  // `to` is het telefoonnummer van de klant. `context` is optioneel en wordt
+  // gebruikt door template-kanalen (WhatsApp); tekst-kanalen negeren het.
+  send(to: string, text: string, context?: MessageContext): Promise<MessageResult>;
 }
