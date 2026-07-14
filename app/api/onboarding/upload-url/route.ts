@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/db/client";
+import { clientIp, rateLimit } from "@/lib/util/ratelimit";
 
 // Geeft een eenmalige, beveiligde upload-URL uit waarmee de browser een foto
 // RECHTSTREEKS naar Supabase Storage stuurt. Zo lopen grote bestanden niet
 // door deze serverless-functie heen (Vercel heeft een body-limiet van ~4,5 MB).
+// Misbruik-remmen: rate limit per IP + hard plafond per inzending.
 
 const BUCKET = "onboarding";
 const MAX_SIZE = 15 * 1024 * 1024; // 15 MB per bestand
+const MAX_PER_SUBMISSION = 35; // 30 foto's + logo + json + marge
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -47,6 +50,14 @@ function safeName(name: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Best-effort rem tegen bulk-misbruik van dit publieke endpoint.
+    if (!rateLimit(`upload:${clientIp(req)}`, 40, 10 * 60_000)) {
+      return NextResponse.json(
+        { error: "Te veel uploads in korte tijd. Probeer het over een paar minuten opnieuw." },
+        { status: 429 },
+      );
+    }
+
     const body = (await req.json().catch(() => null)) as {
       submissionId?: unknown;
       fileName?: unknown;
@@ -84,21 +95,37 @@ export async function POST(req: NextRequest) {
 
     await ensureBucket();
     const db = getServiceClient();
-    const path = `${submissionId.toLowerCase()}/${kind}/${Date.now()}-${safeName(fileName)}`;
+    const prefix = submissionId.toLowerCase();
+
+    // Hard plafond per inzending, zodat één submissionId de bucket niet kan
+    // volpompen. list() op de map van deze inzending is goedkoop.
+    const { data: bestaande } = await db.storage
+      .from(BUCKET)
+      .list(`${prefix}/${kind}`, { limit: MAX_PER_SUBMISSION + 1 });
+    if ((bestaande?.length ?? 0) >= MAX_PER_SUBMISSION) {
+      return NextResponse.json(
+        { error: "Maximum aantal bestanden voor deze inzending bereikt." },
+        { status: 400 },
+      );
+    }
+
+    const path = `${prefix}/${kind}/${Date.now()}-${safeName(fileName)}`;
     const { data, error } = await db.storage
       .from(BUCKET)
       .createSignedUploadUrl(path);
 
     if (error || !data) {
+      console.error("upload-url: createSignedUploadUrl faalde:", error?.message);
       return NextResponse.json(
-        { error: error?.message ?? "Upload-URL aanmaken mislukt." },
+        { error: "Upload voorbereiden mislukt. Probeer het opnieuw." },
         { status: 500 },
       );
     }
     return NextResponse.json({ signedUrl: data.signedUrl, path });
   } catch (e) {
+    console.error("upload-url: onverwachte fout:", e);
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : String(e) },
+      { error: "Er ging iets mis. Probeer het later opnieuw." },
       { status: 500 },
     );
   }

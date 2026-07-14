@@ -5,8 +5,7 @@ import "./agency.css";
 
 export const metadata = {
   title: `${agency.name} | ${agency.tagline}`,
-  description:
-    "Websites voor hoveniers en andere vakmensen: aanvragen direct op je telefoon, automatische Google-reviews en onderhoud inbegrepen. Demo eerst, betalen daarna.",
+  description: agency.metaDescription,
 };
 
 export default function AgencyHome() {
@@ -20,13 +19,13 @@ export default function AgencyHome() {
             <span aria-hidden="true">{agency.mark}</span> {agency.name}
           </Link>
           <nav className="a-header__nav" aria-label="Hoofdmenu">
-            <a className="a-header__link" href="#voorbeeld">Voorbeeld</a>
-            <a className="a-header__link" href="#wat-je-krijgt">Wat je krijgt</a>
-            <a className="a-header__link" href="#werkwijze">Werkwijze</a>
-            <a className="a-header__link" href="#prijs">Prijs</a>
-            <a className="a-header__link" href="#vragen">Vragen</a>
+            {agency.nav.map((item) => (
+              <a className="a-header__link" href={item.href} key={item.href}>
+                {item.label}
+              </a>
+            ))}
             <a href="#demo-aanvragen" className="a-btn a-btn--accent a-header__cta">
-              Gratis demo
+              {agency.navCta}
             </a>
           </nav>
         </div>
@@ -64,7 +63,7 @@ export default function AgencyHome() {
         <section className="a-section" id="voorbeeld">
           <div className="a-container">
             <div className="a-section__head">
-              <span className="a-eyebrow">Voorbeeld</span>
+              <span className="a-eyebrow">{agency.voorbeeld.eyebrow}</span>
               <h2 className="a-section__title">{agency.voorbeeld.heading}</h2>
               <p className="a-section__intro">{agency.voorbeeld.intro}</p>
             </div>
@@ -73,12 +72,12 @@ export default function AgencyHome() {
                 <span className="a-browser__dot" />
                 <span className="a-browser__dot" />
                 <span className="a-browser__dot" />
-                <span className="a-browser__url">degroenevinger.nl (demo)</span>
+                <span className="a-browser__url">{agency.voorbeeld.adresbalk}</span>
               </div>
               <iframe
                 className="a-browser__frame"
                 src={demoPath}
-                title="Voorbeeld van een klant-website (demo-hovenier)"
+                title={agency.voorbeeld.iframeTitle}
                 loading="lazy"
               />
             </div>
@@ -98,7 +97,7 @@ export default function AgencyHome() {
         <section className="a-section a-section--warm" id="wat-je-krijgt">
           <div className="a-container">
             <div className="a-section__head">
-              <span className="a-eyebrow">Alles inbegrepen</span>
+              <span className="a-eyebrow">{agency.features.eyebrow}</span>
               <h2 className="a-section__title">{agency.features.heading}</h2>
               <p className="a-section__intro">{agency.features.intro}</p>
             </div>
@@ -117,7 +116,7 @@ export default function AgencyHome() {
         <section className="a-section" id="werkwijze">
           <div className="a-container">
             <div className="a-section__head">
-              <span className="a-eyebrow">Werkwijze</span>
+              <span className="a-eyebrow">{agency.werkwijze.eyebrow}</span>
               <h2 className="a-section__title">{agency.werkwijze.heading}</h2>
               <p className="a-section__intro">{agency.werkwijze.intro}</p>
             </div>
@@ -136,7 +135,7 @@ export default function AgencyHome() {
         <section className="a-section a-section--warm" id="prijs">
           <div className="a-container">
             <div className="a-section__head">
-              <span className="a-eyebrow">Prijs</span>
+              <span className="a-eyebrow">{agency.prijs.eyebrow}</span>
               <h2 className="a-section__title">{agency.prijs.heading}</h2>
             </div>
             <div className="a-price">
@@ -159,7 +158,7 @@ export default function AgencyHome() {
 
         <section className="a-section">
           <div className="a-container a-over">
-            <span className="a-eyebrow">Over mij</span>
+            <span className="a-eyebrow">{agency.over.eyebrow}</span>
             <h2 className="a-section__title">{agency.over.heading}</h2>
             <p>{agency.over.body}</p>
           </div>
@@ -168,8 +167,8 @@ export default function AgencyHome() {
         <section className="a-section a-section--warm" id="vragen">
           <div className="a-container a-faq">
             <div className="a-section__head">
-              <span className="a-eyebrow">Veelgestelde vragen</span>
-              <h2 className="a-section__title">Vragen die ik vaak krijg</h2>
+              <span className="a-eyebrow">{agency.faqEyebrow}</span>
+              <h2 className="a-section__title">{agency.faqHeading}</h2>
             </div>
             <div className="a-faq-list">
               {agency.faq.map((item) => (
@@ -188,11 +187,11 @@ export default function AgencyHome() {
         <section className="a-section" id="demo-aanvragen">
           <div className="a-container a-contact">
             <div>
-              <span className="a-eyebrow">Gratis demo</span>
+              <span className="a-eyebrow">{agency.contact.eyebrow}</span>
               <h2 className="a-section__title">{agency.contact.heading}</h2>
               <p className="a-section__intro">{agency.contact.intro}</p>
             </div>
-            <LeadForm slug="websitemannetje" />
+            <LeadForm slug="websitemannetje" informal />
           </div>
         </section>
       </main>

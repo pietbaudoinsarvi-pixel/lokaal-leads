@@ -10,6 +10,17 @@ export const agency = {
   email: "pietbaudoinsarvi@gmail.com", // TODO: info@websitemannetje.nl na domeinregistratie
   priceMonthly: 149,
   demoSlug: "demo-hovenier",
+  metaDescription:
+    "Websites voor hoveniers en andere vakmensen: aanvragen direct op je telefoon, automatische Google-reviews en onderhoud inbegrepen. Demo eerst, betalen daarna.",
+
+  nav: [
+    { label: "Voorbeeld", href: "#voorbeeld" },
+    { label: "Wat je krijgt", href: "#wat-je-krijgt" },
+    { label: "Werkwijze", href: "#werkwijze" },
+    { label: "Prijs", href: "#prijs" },
+    { label: "Vragen", href: "#vragen" },
+  ],
+  navCta: "Gratis demo",
 
   hero: {
     eyebrow: "Websites voor vakmensen",
@@ -28,13 +39,17 @@ export const agency = {
   ],
 
   voorbeeld: {
+    eyebrow: "Voorbeeld",
     heading: "Zo ziet jouw site eruit",
     intro:
       "Dit is een demo zoals ik hem voor een hovenier bouw. Alles werkt echt: het offerteformulier, de assistent die vragen beantwoordt, en de eigenaar krijgt elke aanvraag direct op zijn telefoon.",
+    adresbalk: "degroenevinger.nl (demo)",
+    iframeTitle: "Voorbeeld van een klant-website",
     linkLabel: "Open het voorbeeld volledig",
   },
 
   features: {
+    eyebrow: "Alles inbegrepen",
     heading: "Wat je krijgt",
     intro: "Geen los websiteje, maar een systeem dat werk voor je binnenhaalt.",
     items: [
@@ -78,6 +93,7 @@ export const agency = {
   },
 
   werkwijze: {
+    eyebrow: "Werkwijze",
     heading: "Zo werkt het",
     intro: "Drie stappen, en de eerste kost je helemaal niets.",
     steps: [
@@ -100,6 +116,7 @@ export const agency = {
   },
 
   prijs: {
+    eyebrow: "Prijs",
     heading: "Eén duidelijke prijs",
     includes: [
       "Complete website met jouw foto's en verhaal",
@@ -115,10 +132,13 @@ export const agency = {
   },
 
   over: {
+    eyebrow: "Over mij",
     heading: "Wie is het mannetje?",
     body: "Ik ben Piet. Ik bouw websites voor vakmensen die geen tijd hebben voor computergedoe. Je belt of appt gewoon met mij, niet met een helpdesk. Ik houd het simpel: jij doet je vak, ik zorg dat je gevonden wordt en dat geen aanvraag verloren gaat.",
   },
 
+  faqEyebrow: "Veelgestelde vragen",
+  faqHeading: "Vragen die ik vaak krijg",
   faq: [
     {
       q: "Wat kost het?",
@@ -147,8 +167,23 @@ export const agency = {
   ],
 
   contact: {
+    eyebrow: "Gratis demo",
     heading: "Vraag je gratis demo aan",
     intro:
       "Laat je naam en nummer achter en zet in het bericht je bedrijfsnaam en plaats. Ik bouw je demo en bel of app je zodra hij klaarstaat. Kost niets, verplicht tot niets.",
   },
+
+  // Dienstenlijst voor het aanleverformulier. Niche-afhankelijk: pas dit aan
+  // als je een andere niche gaat bedienen.
+  onboardingDiensten: [
+    "Tuinaanleg",
+    "Tuinonderhoud",
+    "Bestrating",
+    "Beplanting",
+    "Snoeien",
+    "Gazon",
+    "Schuttingen en vlonders",
+    "Vijvers",
+    "Tuinontwerp",
+  ],
 } as const;

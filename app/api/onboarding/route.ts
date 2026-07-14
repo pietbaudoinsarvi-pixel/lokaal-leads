@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/db/client";
 import { TelegramNotifier } from "@/lib/notify/telegram";
+import { clientIp, rateLimit } from "@/lib/util/ratelimit";
 
 // Ontvangt het ingevulde aanleverformulier. De foto's staan op dit moment al
 // in Supabase Storage (direct geupload via signed URLs); hier slaan we de
@@ -16,8 +17,24 @@ function str(v: unknown, max = 2000): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
+// Voor velden die in de Telegram-melding belanden: regeleindes en andere
+// controltekens eruit, zodat niemand extra (vervalste) regels in de melding
+// aan de operator kan injecteren. Opslag in JSON behoudt wel de originele
+// tekst (via str), alleen de melding wordt platgeslagen.
+function line(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/[\r\n\t\u0000-\u001f\u007f]+/g, " ").trim();
+}
+
 export async function POST(req: NextRequest) {
   try {
+    if (!rateLimit(`onboarding:${clientIp(req)}`, 10, 10 * 60_000)) {
+      return NextResponse.json(
+        { error: "Te veel inzendingen in korte tijd. Probeer het over een paar minuten opnieuw." },
+        { status: 429 },
+      );
+    }
+
     const body = (await req.json().catch(() => null)) as Record<
       string,
       unknown
@@ -112,25 +129,27 @@ export async function POST(req: NextRequest) {
         { contentType: "application/json; charset=utf-8", upsert: true },
       );
     if (uploadError) {
+      console.error("onboarding: opslaan aanlevering.json faalde:", uploadError.message);
       return NextResponse.json(
-        { error: `Opslaan mislukt: ${uploadError.message}` },
+        { error: "Opslaan mislukt. Probeer het later opnieuw." },
         { status: 500 },
       );
     }
 
     // Operator-melding, synchroon met 1 retry. Falen breekt de request niet:
-    // de inzending staat al veilig in Storage.
+    // de inzending staat al veilig in Storage. Alle gebruikersinvoer gaat
+    // door line() zodat er geen vervalste regels geinjecteerd kunnen worden.
     const operatorChatId = (process.env.OPERATOR_TELEGRAM_CHAT_ID ?? "")
       .replace(/^﻿/, "")
       .trim();
     const text = [
-      `📥 Nieuwe aanlevering: ${bedrijf.naam}`,
+      `📥 Nieuwe aanlevering: ${line(bedrijf.naam)}`,
       ``,
-      `Contact: ${bedrijf.contactpersoon}, ${bedrijf.telefoon}${bedrijf.email ? `, ${bedrijf.email}` : ""}`,
-      `Plaats: ${bedrijf.plaats}`,
-      `Diensten: ${payload.diensten.join(", ") || "(geen aangevinkt)"}`,
+      `Contact: ${line(bedrijf.contactpersoon)}, ${line(bedrijf.telefoon)}${bedrijf.email ? `, ${line(bedrijf.email)}` : ""}`,
+      `Plaats: ${line(bedrijf.plaats)}`,
+      `Diensten: ${line(payload.diensten.join(", ")) || "(geen aangevinkt)"}`,
       `Foto's: ${fotos.length}${logoPath ? " + logo" : ""}`,
-      `Meldingen naar: ${payload.meldingen.nummer}`,
+      `Meldingen naar: ${line(payload.meldingen.nummer)}`,
       ``,
       `Alles staat in Supabase Storage: ${BUCKET}/${submissionId}/`,
     ].join("\n");
@@ -144,8 +163,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, delivered });
   } catch (e) {
+    console.error("onboarding: onverwachte fout:", e);
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : String(e) },
+      { error: "Er ging iets mis. Probeer het later opnieuw." },
       { status: 500 },
     );
   }

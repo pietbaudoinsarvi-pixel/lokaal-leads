@@ -26,7 +26,7 @@ export default function Hero({ hero, slug, phone, photo, eyebrow }: HeroProps) {
         <p className="hero__sub">{hero.subheading}</p>
         <div className="hero__actions">
           <Link href={`/${slug}/contact`} className="btn btn--accent btn--lg">{hero.ctaLabel}</Link>
-          <a href={telHref} className="hero__call">of bel {phone}</a>
+          {phone && <a href={telHref} className="hero__call">of bel {phone}</a>}
         </div>
       </div>
     </section>

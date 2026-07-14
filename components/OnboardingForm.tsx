@@ -1,26 +1,27 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { agency } from "@/config/agency";
 
 // Aanleverformulier voor nieuwe klanten. Foto's gaan RECHTSTREEKS van de
 // browser naar Supabase Storage via signed upload-URLs (grote bestanden lopen
 // dus niet door onze serverless-functies). Daarna gaat het formulier zelf als
 // JSON naar /api/onboarding.
 
-const DIENSTEN = [
-  "Tuinaanleg",
-  "Tuinonderhoud",
-  "Bestrating",
-  "Beplanting",
-  "Snoeien",
-  "Gazon",
-  "Schuttingen en vlonders",
-  "Vijvers",
-  "Tuinontwerp",
-];
+const DIENSTEN = agency.onboardingDiensten;
 
 const MAX_FOTOS = 30;
 const MAX_SIZE = 15 * 1024 * 1024;
+
+// Fallback voor heel oude browsers zonder crypto.randomUUID: wel random,
+// zodat inzenders nooit dezelfde Storage-map delen.
+function makeSubmissionId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  const hex = () => Math.floor(Math.random() * 16).toString(16);
+  return "xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx".replace(/x/g, hex);
+}
 
 interface FotoItem {
   key: string;
@@ -33,17 +34,17 @@ interface FotoItem {
 type Status = "invullen" | "versturen" | "klaar" | "fout";
 
 export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf?: string }) {
-  const [submissionId] = useState(() =>
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : "00000000-0000-4000-8000-000000000000",
-  );
+  const [submissionId] = useState(makeSubmissionId);
   const [fotos, setFotos] = useState<FotoItem[]>([]);
   const [logo, setLogo] = useState<FotoItem | null>(null);
+  const [fotoMelding, setFotoMelding] = useState("");
   const [status, setStatus] = useState<Status>("invullen");
   const [error, setError] = useState("");
   const inFlight = useRef(false);
   const keyCounter = useRef(0);
+  // Actuele logo-selectie, zodat een trage oude upload een nieuwere keuze
+  // niet kan overschrijven (state-race).
+  const logoKeyRef = useRef<string>("");
 
   async function uploadFile(file: File, kind: "fotos" | "logo"): Promise<string> {
     const res = await fetch("/api/onboarding/upload-url", {
@@ -78,6 +79,15 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
     const files = Array.from(e.target.files ?? []);
     e.target.value = ""; // zelfde bestand later opnieuw kunnen kiezen
     const ruimte = MAX_FOTOS - fotos.length;
+    if (files.length > ruimte) {
+      setFotoMelding(
+        ruimte <= 0
+          ? `Het maximum van ${MAX_FOTOS} foto's is bereikt. Verwijder eerst een foto om een andere toe te voegen.`
+          : `Er passen nog ${ruimte} foto's bij (maximum ${MAX_FOTOS}); de rest is niet toegevoegd.`,
+      );
+    } else if (files.length > 0) {
+      setFotoMelding("");
+    }
     files.slice(0, ruimte).forEach((file) => {
       const key = `f${keyCounter.current++}`;
       if (file.size > MAX_SIZE) {
@@ -115,21 +125,26 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
     e.target.value = "";
     if (!file) return;
     const key = `logo${keyCounter.current++}`;
+    logoKeyRef.current = key;
     if (file.size > MAX_SIZE) {
       setLogo({ key, name: file.name, status: "fout", error: "Groter dan 15 MB" });
       return;
     }
     setLogo({ key, name: file.name, status: "bezig" });
     uploadFile(file, "logo")
-      .then((path) => setLogo({ key, name: file.name, status: "klaar", path }))
-      .catch((err: unknown) =>
+      .then((path) => {
+        if (logoKeyRef.current !== key) return; // inmiddels ander logo gekozen
+        setLogo({ key, name: file.name, status: "klaar", path });
+      })
+      .catch((err: unknown) => {
+        if (logoKeyRef.current !== key) return;
         setLogo({
           key,
           name: file.name,
           status: "fout",
           error: err instanceof Error ? err.message : "Upload mislukt",
-        }),
-      );
+        });
+      });
   }
 
   function verwijderFoto(key: string) {
@@ -304,8 +319,8 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
             placeholder="Bijv. 15 jaar ervaring, altijd zelf op de klus, afspraak is afspraak"
           />
         </label>
-        <div className="ob-field">
-          <span>Hoe spreek je je klanten aan op de site?</span>
+        <fieldset className="ob-subfieldset">
+          <legend>Hoe spreek je je klanten aan op de site?</legend>
           <div className="ob-radios">
             <label className="ob-check">
               <input type="radio" name="aanspreekvorm" value="u" defaultChecked />
@@ -316,7 +331,7 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
               <span>Met &quot;je&quot; (informeel)</span>
             </label>
           </div>
-        </div>
+        </fieldset>
       </fieldset>
 
       <fieldset className="ob-section">
@@ -368,6 +383,9 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
           <input type="file" accept="image/*" multiple onChange={onFotosChange} />
           <span>📷 Kies foto&apos;s</span>
         </label>
+        {fotoMelding && (
+          <p className="ob-hint ob-hint--warn" role="status">{fotoMelding}</p>
+        )}
         {fotos.length > 0 && (
           <ul className="ob-files">
             {fotos.map((f) => (
@@ -392,6 +410,8 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
         )}
         <p className="ob-hint">
           {geslaagd.length} foto{geslaagd.length === 1 ? "" : "'s"} geupload.
+          {fotos.some((f) => f.status === "fout") &&
+            " Mislukte foto's gaan niet mee; probeer ze opnieuw of stuur ze later na."}{" "}
           Geen foto&apos;s bij de hand? Je kunt ze ook later via WhatsApp nasturen.
         </p>
       </fieldset>

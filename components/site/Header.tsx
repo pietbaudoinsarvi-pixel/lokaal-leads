@@ -53,7 +53,9 @@ export default function Header({ businessName, phone, slug, logoMark }: HeaderPr
               {n.label}
             </Link>
           ))}
-          <a href={telHref} className="btn btn--sm btn--accent site-nav__cta">Bel {phone}</a>
+          {phone && (
+            <a href={telHref} className="btn btn--sm btn--accent site-nav__cta">Bel {phone}</a>
+          )}
         </nav>
       </div>
     </header>

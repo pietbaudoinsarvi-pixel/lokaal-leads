@@ -6,6 +6,7 @@
   --a-primary: #1f4467;
   --a-dark: #15304b;
   --a-accent: #e8762d;
+  --a-accent-ink: #b8551a; /* donkerder oranje voor TEKST op licht (contrast) */
   --a-ink: #22303c;
   --a-muted: #5d6b77;
   --a-line: #e5e1da;
@@ -38,7 +39,7 @@
 .a-eyebrow {
   display: inline-flex; align-items: center; gap: .65rem;
   text-transform: uppercase; letter-spacing: .16em; font-size: .74rem;
-  font-weight: 700; color: var(--a-accent); margin: 0 0 .85rem;
+  font-weight: 700; color: var(--a-accent-ink); margin: 0 0 .85rem;
 }
 .a-eyebrow::before { content: ""; width: 26px; height: 2px; background: var(--a-accent); }
 

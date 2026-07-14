@@ -31,7 +31,7 @@ export default function Footer({ business, slug, year, logoMark }: FooterProps) 
         </div>
         <div className="site-footer__col">
           <h2>Contact</h2>
-          <a href={telHref}>{business.phone}</a>
+          {business.phone && <a href={telHref}>{business.phone}</a>}
           <a href={`mailto:${business.email}`}>{business.email}</a>
           <span>{business.serviceArea}</span>
           {business.kvk && <span>KVK {business.kvk}</span>}

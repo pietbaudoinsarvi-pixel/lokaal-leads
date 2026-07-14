@@ -21,10 +21,12 @@ export default function Contact({ contact, business, slug, hideHead = false }: C
             </>
           )}
           <ul className="contact__list">
-            <li>
-              <span>Telefoon</span>
-              <a href={telHref}>{business.phone}</a>
-            </li>
+            {business.phone && (
+              <li>
+                <span>Telefoon</span>
+                <a href={telHref}>{business.phone}</a>
+              </li>
+            )}
             <li>
               <span>E-mail</span>
               <a href={`mailto:${business.email}`}>{business.email}</a>
