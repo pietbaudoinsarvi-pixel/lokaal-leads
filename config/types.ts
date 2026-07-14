@@ -79,6 +79,20 @@ export interface ClientConfig {
       intro?: string;
       items: GalleryItem[];
     };
+    // "Zo werkt het": stappenplan dat drempels wegneemt (optioneel).
+    process?: {
+      heading: string;
+      intro?: string;
+      steps: { title: string; description: string }[];
+    };
+    // Klantbeoordelingen / social proof (optioneel).
+    reviews?: {
+      heading?: string;
+      rating?: number; // bv. 4.9
+      count?: number; // aantal reviews
+      source?: string; // bv. "Google"
+      items: { quote: string; name: string; location?: string }[];
+    };
     // Call-to-action-banden. Per klant/niche tekstueel aan te passen.
     cta: {
       home: CtaBlock;

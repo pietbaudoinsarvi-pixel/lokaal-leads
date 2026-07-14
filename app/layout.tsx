@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "Lokaal Leads",
-  description: "Moderne websites met een slimme backend voor lokale bedrijven.",
+  title: "Websitemannetje | Websites voor vakmensen",
+  description:
+    "Websites die klussen opleveren: aanvragen direct op je telefoon, automatische Google-reviews en onderhoud inbegrepen.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

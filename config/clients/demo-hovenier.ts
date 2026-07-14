@@ -93,6 +93,53 @@ const config: ClientConfig = {
         { image: "/photos/demo-hovenier/beplanting-bloem-detail.webp", caption: "Oog voor detail" },
       ],
     },
+    process: {
+      heading: "Zo werkt het",
+      intro: "In drie heldere stappen naar uw nieuwe tuin. Zonder gedoe, met een vast aanspreekpunt.",
+      steps: [
+        {
+          title: "Kennismaking en offerte",
+          description:
+            "U belt of laat uw gegevens achter. Wij komen vrijblijvend langs, luisteren naar uw wensen en maken een gratis offerte op maat.",
+        },
+        {
+          title: "Plan en planning",
+          description:
+            "U ontvangt een helder plan met een vaste prijs en een duidelijke planning. Geen verrassingen achteraf.",
+        },
+        {
+          title: "Aanleg en nazorg",
+          description:
+            "Wij voeren het werk netjes uit en ruimen alles op. Ook daarna kunt u rekenen op ons voor het onderhoud.",
+        },
+      ],
+    },
+    reviews: {
+      heading: "Wat klanten zeggen",
+      rating: 4.9,
+      count: 47,
+      source: "Google",
+      items: [
+        {
+          quote:
+            "Jan en zijn team hebben onze achtertuin compleet omgetoverd. Vakwerk, netjes en precies op afspraak.",
+          name: "Familie De Vries",
+          location: "Utrecht",
+        },
+        {
+          quote:
+            "Snelle reactie, een duidelijke offerte en een prachtig resultaat. Wij zijn er heel blij mee.",
+          name: "Marloes B.",
+          location: "Nieuwegein",
+        },
+        {
+          quote:
+            "Al jaren verzorgen zij ons tuinonderhoud. Altijd betrouwbaar en ze denken echt met je mee.",
+          name: "Peter K.",
+          location: "De Bilt",
+        },
+      ],
+    },
     cta: {
       home: {
         heading: "Klaar voor een tuin om trots op te zijn?",

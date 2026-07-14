@@ -1,0 +1,123 @@
+/* Aanleverformulier. Zelfde merk-palet als de agency-site (marineblauw +
+   vakman-oranje), mobiel-eerst want klanten vullen dit op hun telefoon in. */
+
+.ob {
+  --ob-primary: #1f4467;
+  --ob-dark: #15304b;
+  --ob-accent: #e8762d;
+  --ob-ink: #22303c;
+  --ob-muted: #5d6b77;
+  --ob-line: #e5e1da;
+  --ob-bg: #faf7f2;
+  --ob-radius: 12px;
+  color: var(--ob-ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  background: var(--ob-bg);
+  min-height: 100vh;
+}
+.ob *, .ob *::before, .ob *::after { box-sizing: border-box; }
+.ob .sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+.ob-container { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+.ob-header { background: var(--ob-dark); color: #fff; padding: 2.2rem 0 2.4rem; margin-bottom: 2rem; }
+.ob-header .ob-container { padding-bottom: 0; }
+.ob-header__brand { font-weight: 800; font-size: 1.05rem; opacity: .85; margin: 0 0 .9rem; }
+.ob-header h1 { font-size: clamp(1.7rem, 5vw, 2.4rem); margin: 0 0 .6rem; letter-spacing: -.02em; line-height: 1.15; }
+.ob-header p { margin: 0; opacity: .9; max-width: 56ch; }
+
+.ob-form { display: grid; gap: 1.5rem; }
+
+.ob-section { border: 1px solid var(--ob-line); border-radius: var(--ob-radius); background: #fff; padding: 1.4rem 1.3rem 1.5rem; margin: 0; display: grid; gap: 1rem; }
+.ob-section legend { font-weight: 800; color: var(--ob-dark); font-size: 1.12rem; padding: 0 .4rem; }
+
+.ob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 620px) { .ob-grid { grid-template-columns: 1fr; } }
+
+.ob-field { display: grid; gap: .35rem; }
+.ob-field > span { font-weight: 600; font-size: .92rem; color: var(--ob-dark); }
+.ob-field input, .ob-field textarea, .ob-field select {
+  font-family: inherit; font-size: 1rem; padding: .8rem .9rem;
+  border: 1px solid var(--ob-line); border-radius: 8px; background: var(--ob-bg);
+  color: var(--ob-ink); width: 100%;
+}
+.ob-field textarea { resize: vertical; }
+.ob-field input:focus, .ob-field textarea:focus, .ob-field select:focus {
+  outline: none; border-color: var(--ob-primary);
+  box-shadow: 0 0 0 3px rgba(31, 68, 103, .16); background: #fff;
+}
+.ob-field--color input { padding: .3rem; height: 3rem; cursor: pointer; }
+
+.ob-hint { color: var(--ob-muted); font-size: .92rem; margin: 0; }
+.ob-hint--center { text-align: center; }
+
+.ob-checks { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem .8rem; }
+@media (max-width: 520px) { .ob-checks { grid-template-columns: 1fr; } }
+.ob-check { display: flex; align-items: flex-start; gap: .6rem; cursor: pointer; padding: .35rem 0; }
+.ob-check input { width: 1.2rem; height: 1.2rem; margin-top: .2rem; accent-color: var(--ob-primary); flex-shrink: 0; }
+.ob-radios { display: flex; gap: 1.6rem; flex-wrap: wrap; }
+
+.ob-tips { margin: 0; padding-left: 1.2rem; color: var(--ob-muted); font-size: .95rem; display: grid; gap: .2rem; }
+
+.ob-upload { display: block; cursor: pointer; }
+.ob-upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.ob-upload span {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  border: 2px dashed var(--ob-primary); border-radius: var(--ob-radius);
+  padding: 1.5rem 1rem; font-weight: 700; color: var(--ob-primary);
+  background: rgba(31, 68, 103, .04); font-size: 1.05rem; text-align: center;
+}
+.ob-upload:hover span, .ob-upload:focus-within span { background: rgba(31, 68, 103, .09); }
+.ob-upload--klein span { padding: .8rem 1rem; font-size: .95rem; }
+
+.ob-files { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.ob-file {
+  display: flex; align-items: center; gap: .7rem;
+  border: 1px solid var(--ob-line); border-radius: 8px;
+  padding: .5rem .75rem; font-size: .9rem; background: var(--ob-bg);
+}
+.ob-file__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ob-file__status { flex-shrink: 0; color: var(--ob-muted); font-size: .84rem; }
+.ob-file--klaar .ob-file__status { color: #1e7c43; font-weight: 600; }
+.ob-file--fout { border-color: #e4b6b2; background: #fdf3f2; }
+.ob-file--fout .ob-file__status { color: #b3261e; }
+.ob-file__remove {
+  flex-shrink: 0; border: none; background: none; cursor: pointer;
+  color: var(--ob-muted); font-size: .95rem; padding: .2rem .4rem; border-radius: 6px;
+}
+.ob-file__remove:hover { color: #b3261e; background: rgba(179, 38, 30, .08); }
+
+.ob-akkoord { background: #fff; border: 1px solid var(--ob-line); border-radius: var(--ob-radius); padding: 1rem 1.2rem; }
+
+.ob-error { color: #b3261e; font-weight: 600; margin: 0; text-align: center; }
+
+.ob-submit {
+  border: none; cursor: pointer; border-radius: 10px;
+  background: var(--ob-accent); color: #fff; font-family: inherit;
+  font-weight: 800; font-size: 1.1rem; padding: 1.1rem 2rem; width: 100%;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.ob-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(232, 118, 45, .35); }
+.ob-submit:disabled { opacity: .55; cursor: default; }
+.ob-submit:focus-visible { outline: 2px solid var(--ob-dark); outline-offset: 3px; }
+
+.ob-done {
+  background: #fff; border: 1px solid var(--ob-line); border-radius: var(--ob-radius);
+  padding: 3rem 1.5rem; text-align: center; max-width: 560px; margin: 0 auto;
+}
+.ob-done__icon {
+  width: 3.4rem; height: 3.4rem; border-radius: 50%; background: #1e7c43;
+  color: #fff; font-size: 1.7rem; font-weight: 800; display: grid;
+  place-items: center; margin: 0 auto 1.1rem;
+}
+.ob-done h2 { color: var(--ob-dark); margin: 0 0 .6rem; }
+.ob-done p { color: var(--ob-muted); margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ob * { transition: none !important; }
+}

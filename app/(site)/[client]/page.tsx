@@ -3,8 +3,11 @@ import Link from "next/link";
 import { getClient } from "@/lib/clients";
 import Hero from "@/components/site/Hero";
 import Usps from "@/components/site/Usps";
+import Process from "@/components/site/Process";
 import Services from "@/components/site/Services";
 import Gallery from "@/components/site/Gallery";
+import Reviews from "@/components/site/Reviews";
+import Faq from "@/components/site/Faq";
 import About from "@/components/site/About";
 
 export default async function HomePage({ params }: { params: Promise<{ client: string }> }) {
@@ -24,8 +27,11 @@ export default async function HomePage({ params }: { params: Promise<{ client: s
         eyebrow={config.business.city}
       />
       <Usps usps={p.usps} />
+      <Process process={p.process} />
       <Services services={p.services} />
       <Gallery gallery={p.gallery} />
+      <Reviews reviews={p.reviews} googleReviewLink={config.operational.googleReviewLink} />
+      <Faq items={config.ai.faq} />
       <About about={p.about} photo={p.photos[p.about.imageSlot]} />
       <section className="cta-band">
         <div className="container cta-band__inner">
