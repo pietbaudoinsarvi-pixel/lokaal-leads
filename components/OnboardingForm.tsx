@@ -17,9 +17,60 @@ import { agency } from "@/config/agency";
 
 const DIENSTEN = agency.onboardingDiensten;
 
-const MAX_FOTOS = 30;
-const MAX_SIZE = 15 * 1024 * 1024;
+const MAX_FOTOS = 60;
+const MAX_SIZE = 15 * 1024 * 1024; // na verkleinen
+const MAX_ORIGINEEL = 60 * 1024 * 1024; // harde bovengrens op het origineel
 const MAX_TEGELIJK = 3;
+
+// Foto's vóór het uploaden in de browser verkleinen: telefoontfoto's van
+// 4-8 MB worden ~1 MB zonder zichtbaar kwaliteitsverlies voor webgebruik.
+// Zo blijven 60 foto's uploaden vlot op mobiel en blijft de opslag klein.
+// Lukt decoderen niet (exotisch formaat), dan gaat het origineel door.
+const MAX_AFMETING = 2560; // langste zijde in pixels
+const JPEG_KWALITEIT = 0.85;
+
+async function comprimeer(
+  file: File,
+): Promise<{ blob: Blob; type: string; name: string }> {
+  const origineel = {
+    blob: file as Blob,
+    type: file.type || "image/jpeg",
+    name: file.name,
+  };
+  // Klein genoeg: niet aankomen.
+  if (file.size < 700 * 1024) return origineel;
+  try {
+    const bitmap = await createImageBitmap(file, {
+      imageOrientation: "from-image",
+    });
+    const schaal = Math.min(
+      1,
+      MAX_AFMETING / Math.max(bitmap.width, bitmap.height),
+    );
+    const w = Math.max(1, Math.round(bitmap.width * schaal));
+    const h = Math.max(1, Math.round(bitmap.height * schaal));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return origineel;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob(res, "image/jpeg", JPEG_KWALITEIT),
+    );
+    if (blob && blob.size < file.size) {
+      return {
+        blob,
+        type: "image/jpeg",
+        name: file.name.replace(/\.[^.]+$/, "") + ".jpg",
+      };
+    }
+    return origineel;
+  } catch {
+    return origineel;
+  }
+}
 
 // Fallback voor heel oude browsers zonder crypto.randomUUID: wel random,
 // zodat inzenders nooit dezelfde Storage-map delen.
@@ -89,15 +140,18 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
     setFotos((prev) => prev.map((f) => (f.key === key ? { ...f, ...patch } : f)));
   }
 
-  async function vraagUploadUrl(file: File, kind: "fotos" | "logo") {
+  async function vraagUploadUrl(
+    meta: { name: string; type: string; size: number },
+    kind: "fotos" | "logo",
+  ) {
     const res = await fetch("/api/onboarding/upload-url", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         submissionId,
-        fileName: file.name,
-        contentType: file.type || "image/jpeg",
-        size: file.size,
+        fileName: meta.name,
+        contentType: meta.type || "image/jpeg",
+        size: meta.size,
         kind,
       }),
     });
@@ -114,7 +168,8 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
 
   function xhrPut(
     url: string,
-    file: File,
+    blob: Blob,
+    contentType: string,
     key: string,
     onProgress: (pct: number) => void,
   ): Promise<void> {
@@ -122,7 +177,7 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
       const xhr = new XMLHttpRequest();
       xhrRef.current.set(key, xhr);
       xhr.open("PUT", url);
-      xhr.setRequestHeader("content-type", file.type || "image/jpeg");
+      xhr.setRequestHeader("content-type", contentType || "image/jpeg");
       xhr.upload.onprogress = (ev) => {
         if (ev.lengthComputable) {
           onProgress(Math.round((ev.loaded / ev.total) * 100));
@@ -141,11 +196,27 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
         xhrRef.current.delete(key);
         reject(new Error("Upload afgebroken."));
       };
-      xhr.send(file);
+      xhr.send(blob);
     });
   }
 
-  // Wachtrij: maximaal MAX_TEGELIJK foto-uploads tegelijk.
+  // Wachtrij: maximaal MAX_TEGELIJK foto-uploads tegelijk. Elke worker
+  // verkleint eerst (in de browser) en uploadt daarna het resultaat.
+  async function verwerkFoto(key: string, file: File): Promise<void> {
+    const { blob, type, name } = await comprimeer(file);
+    if (blob.size > MAX_SIZE) {
+      throw new Error("Ook na verkleinen groter dan 15 MB.");
+    }
+    const { signedUrl, path } = await vraagUploadUrl(
+      { name, type, size: blob.size },
+      "fotos",
+    );
+    await xhrPut(signedUrl, blob, type, key, (pct) =>
+      updateFoto(key, { progress: pct }),
+    );
+    updateFoto(key, { status: "klaar", progress: 100, path });
+  }
+
   function pomp() {
     while (activeRef.current < MAX_TEGELIJK && queueRef.current.length > 0) {
       const key = queueRef.current.shift()!;
@@ -153,12 +224,7 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
       if (!file) continue; // intussen verwijderd
       activeRef.current++;
       updateFoto(key, { status: "bezig", progress: 0, error: undefined });
-      vraagUploadUrl(file, "fotos")
-        .then(({ signedUrl, path }) =>
-          xhrPut(signedUrl, file, key, (pct) => updateFoto(key, { progress: pct })).then(
-            () => updateFoto(key, { status: "klaar", progress: 100, path }),
-          ),
-        )
+      verwerkFoto(key, file)
         .catch((err: unknown) =>
           updateFoto(key, {
             status: "fout",
@@ -187,10 +253,10 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
     }
     files.slice(0, Math.max(0, ruimte)).forEach((file) => {
       const key = `f${keyCounter.current++}`;
-      if (file.size > MAX_SIZE) {
+      if (file.size > MAX_ORIGINEEL) {
         setFotos((prev) => [
           ...prev,
-          { key, name: file.name, status: "fout", progress: 0, error: "Groter dan 15 MB" },
+          { key, name: file.name, status: "fout", progress: 0, error: "Bestand is te groot" },
         ]);
         return;
       }
@@ -235,11 +301,15 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
       if (logoKeyRef.current !== key) return; // inmiddels ander logo gekozen
       setLogo((prev) => (prev && prev.key === key ? { ...prev, ...patch } : prev));
     };
-    vraagUploadUrl(file, "logo")
+    // Logo NIET verkleinen: PNG-transparantie moet intact blijven.
+    vraagUploadUrl(
+      { name: file.name, type: file.type || "image/png", size: file.size },
+      "logo",
+    )
       .then(({ signedUrl, path }) =>
-        xhrPut(signedUrl, file, key, (pct) => zetLogo({ progress: pct })).then(() =>
-          zetLogo({ status: "klaar", progress: 100, path }),
-        ),
+        xhrPut(signedUrl, file, file.type || "image/png", key, (pct) =>
+          zetLogo({ progress: pct }),
+        ).then(() => zetLogo({ status: "klaar", progress: 100, path })),
       )
       .catch((err: unknown) =>
         zetLogo({
@@ -487,10 +557,11 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
           Upload ze gewoon vanaf je telefoon.
         </p>
         <ul className="ob-tips">
-          <li>Minimaal 8 foto&apos;s, meer mag altijd (max {MAX_FOTOS})</li>
+          <li>Minimaal 8 foto&apos;s, meer mag altijd (tot {MAX_FOTOS})</li>
           <li>Opgeleverd werk doet het het best</li>
           <li>Ook mooi: jijzelf of je team aan het werk</li>
           <li>Liggende foto&apos;s werken het mooist</li>
+          <li>Grote foto&apos;s verkleinen we automatisch, uploaden blijft snel</li>
         </ul>
         <label className="ob-upload">
           <input type="file" accept="image/*" multiple onChange={onFotosChange} />

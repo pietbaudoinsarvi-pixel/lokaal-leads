@@ -9,7 +9,7 @@ import { clientIp, rateLimit } from "@/lib/util/ratelimit";
 
 const BUCKET = "onboarding";
 const MAX_SIZE = 15 * 1024 * 1024; // 15 MB per bestand
-const MAX_PER_SUBMISSION = 35; // 30 foto's + logo + json + marge
+const MAX_PER_SUBMISSION = 70; // 60 foto's + logo + json + marge
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -50,8 +50,9 @@ function safeName(name: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    // Best-effort rem tegen bulk-misbruik van dit publieke endpoint.
-    if (!rateLimit(`upload:${clientIp(req)}`, 40, 10 * 60_000)) {
+    // Best-effort rem tegen bulk-misbruik van dit publieke endpoint. Ruim
+    // genoeg voor een legitieme klant (60 foto's + logo + wat retries).
+    if (!rateLimit(`upload:${clientIp(req)}`, 120, 10 * 60_000)) {
       return NextResponse.json(
         { error: "Te veel uploads in korte tijd. Probeer het over een paar minuten opnieuw." },
         { status: 429 },
