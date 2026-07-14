@@ -70,7 +70,7 @@ async function alertOperator(
   lead: LeadNotification,
   error?: string,
 ): Promise<void> {
-  const operatorChatId = process.env.OPERATOR_TELEGRAM_CHAT_ID;
+  const operatorChatId = process.env.OPERATOR_TELEGRAM_CHAT_ID?.replace(/^﻿/, "").trim();
   if (!operatorChatId) return;
 
   const text = [

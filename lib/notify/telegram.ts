@@ -6,7 +6,7 @@ export class TelegramNotifier implements Notifier {
   readonly channel = "telegram" as const;
 
   async send(target: string, text: string): Promise<NotifyResult> {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const token = process.env.TELEGRAM_BOT_TOKEN?.replace(/^﻿/, "").trim();
     if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN ontbreekt" };
     if (!target) return { ok: false, error: "notifyTarget (chat_id) ontbreekt" };
 

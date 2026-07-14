@@ -8,8 +8,8 @@ let cached: SupabaseClient | null = null;
 export function getServiceClient(): SupabaseClient {
   if (cached) return cached;
 
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.SUPABASE_URL?.replace(/^﻿/, "").trim();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^﻿/, "").trim();
   if (!url || !key) {
     throw new Error(
       "SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY zijn vereist (server-side).",

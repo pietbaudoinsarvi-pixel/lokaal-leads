@@ -92,7 +92,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, leadId: lead.id, delivered });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[/api/lead] fout:", e);
+    const anyErr = e as { message?: string; code?: string; details?: string; hint?: string };
+    const msg =
+      e instanceof Error
+        ? e.message
+        : anyErr && anyErr.message
+          ? `${anyErr.message}${anyErr.code ? ` [${anyErr.code}]` : ""}${anyErr.details ? ` (${anyErr.details})` : ""}`
+          : JSON.stringify(e);
     return NextResponse.json({ ok: false, error: `Serverfout: ${msg}` }, { status: 500 });
   }
 }

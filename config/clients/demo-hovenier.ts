@@ -100,7 +100,7 @@ const config: ClientConfig = {
     notifyChannel: "telegram",
     // Voor de demo melden we naar jezelf, dus hergebruiken we je operator chat_id.
     // Bij een echte klant zet je hier een letterlijke chat_id of telefoonnummer.
-    notifyTarget: process.env.OPERATOR_TELEGRAM_CHAT_ID ?? "",
+    notifyTarget: (process.env.OPERATOR_TELEGRAM_CHAT_ID ?? "").replace(/^﻿/, "").trim(),
     googleReviewLink: "https://g.page/r/PLAATS-HIER-DE-REVIEW-LINK/review",
   },
 };
