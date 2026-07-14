@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/lib/clients";
-import { insertEvent, deriveLead } from "@/lib/db/queries";
-import { dispatchLeadNotification } from "@/lib/notify/dispatch";
-import { leadDedupKey } from "@/lib/util/dedup";
+import { submitLead } from "@/lib/leads/submit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,59 +45,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const dedupKey = leadDedupKey(clientSlug, phone, message);
-
-  try {
-    // 1. Alles wordt eerst een event (idempotent).
-    const { event, isNew } = await insertEvent({
-      client_slug: clientSlug,
-      type: "lead",
-      source,
-      dedup_key: dedupKey,
-      payload: { name, phone, message, source },
-    });
-
-    // 2. Duplicaat (webhook-retry / dubbelklik): geen tweede melding.
-    if (!isNew) {
-      return NextResponse.json({ ok: true, duplicate: true });
-    }
-
-    // 3. Lead-record volgt uit het event.
-    const lead = await deriveLead({
-      client_slug: clientSlug,
-      event_id: event.id,
-      source,
-      name,
-      phone,
-      message,
-    });
-
-    // 4. Synchrone melding. Faalt hij definitief, dan is de lead nog steeds
-    //    opgeslagen en krijgt de operator een alert; de caller krijgt altijd ok.
-    const { delivered } = await dispatchLeadNotification({
-      eventId: event.id,
-      client,
-      lead: {
-        clientSlug,
-        businessName: client.business.name,
-        source,
-        name,
-        phone,
-        message,
-        createdAt: new Date().toISOString(),
-      },
-    });
-
-    return NextResponse.json({ ok: true, leadId: lead.id, delivered });
-  } catch (e) {
-    console.error("[/api/lead] fout:", e);
-    const anyErr = e as { message?: string; code?: string; details?: string; hint?: string };
-    const msg =
-      e instanceof Error
-        ? e.message
-        : anyErr && anyErr.message
-          ? `${anyErr.message}${anyErr.code ? ` [${anyErr.code}]` : ""}${anyErr.details ? ` (${anyErr.details})` : ""}`
-          : JSON.stringify(e);
-    return NextResponse.json({ ok: false, error: `Serverfout: ${msg}` }, { status: 500 });
+  const result = await submitLead({ client, name, phone, message, source });
+  if (!result.ok) {
+    return NextResponse.json({ ok: false, error: `Serverfout: ${result.error}` }, { status: 500 });
   }
+  if (result.duplicate) {
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
+  return NextResponse.json({ ok: true, leadId: result.leadId, delivered: result.delivered });
 }

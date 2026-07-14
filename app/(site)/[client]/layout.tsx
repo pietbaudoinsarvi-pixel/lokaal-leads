@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getClient } from "@/lib/clients";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
+import ChatWidget from "@/components/ChatWidget";
 import "./site.css";
 
 export async function generateMetadata({ params }: { params: Promise<{ client: string }> }) {
@@ -49,6 +50,11 @@ export default async function SiteLayout({
         business={config.business}
         slug={config.slug}
         year={new Date().getFullYear()}
+        logoMark={config.business.logoMark}
+      />
+      <ChatWidget
+        slug={config.slug}
+        businessName={config.business.name}
         logoMark={config.business.logoMark}
       />
     </div>
