@@ -1,17 +1,25 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { agency } from "@/config/agency";
 
 // Aanleverformulier voor nieuwe klanten. Foto's gaan RECHTSTREEKS van de
 // browser naar Supabase Storage via signed upload-URLs (grote bestanden lopen
-// dus niet door onze serverless-functies). Daarna gaat het formulier zelf als
-// JSON naar /api/onboarding.
+// dus niet door onze serverless-functies). Uploads lopen via XMLHttpRequest
+// zodat we voortgang kunnen tonen en kunnen annuleren; maximaal 3 tegelijk.
+// Daarna gaat het formulier zelf als JSON naar /api/onboarding.
 
 const DIENSTEN = agency.onboardingDiensten;
 
 const MAX_FOTOS = 30;
 const MAX_SIZE = 15 * 1024 * 1024;
+const MAX_TEGELIJK = 3;
 
 // Fallback voor heel oude browsers zonder crypto.randomUUID: wel random,
 // zodat inzenders nooit dezelfde Storage-map delen.
@@ -26,7 +34,8 @@ function makeSubmissionId(): string {
 interface FotoItem {
   key: string;
   name: string;
-  status: "bezig" | "klaar" | "fout";
+  status: "wachtrij" | "bezig" | "klaar" | "fout";
+  progress: number; // 0-100, alleen relevant bij status "bezig"
   path?: string;
   error?: string;
 }
@@ -40,13 +49,47 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
   const [fotoMelding, setFotoMelding] = useState("");
   const [status, setStatus] = useState<Status>("invullen");
   const [error, setError] = useState("");
+  const [aangeraakt, setAangeraakt] = useState(false);
   const inFlight = useRef(false);
   const keyCounter = useRef(0);
+  // Originele File-objecten (voor opnieuw proberen) en lopende requests
+  // (voor annuleren) staan buiten de render-state.
+  const filesRef = useRef(new Map<string, File>());
+  const xhrRef = useRef(new Map<string, XMLHttpRequest>());
+  const queueRef = useRef<string[]>([]);
+  const activeRef = useRef(0);
   // Actuele logo-selectie, zodat een trage oude upload een nieuwere keuze
   // niet kan overschrijven (state-race).
   const logoKeyRef = useRef<string>("");
 
-  async function uploadFile(file: File, kind: "fotos" | "logo"): Promise<string> {
+  // Waarschuw bij wegklikken zolang er iets is ingevuld of geupload en de
+  // inzending nog niet verstuurd is.
+  const dirty = status !== "klaar" && (aangeraakt || fotos.length > 0 || logo !== null);
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
+
+  // Bij unmount alle lopende uploads afbreken.
+  useEffect(() => {
+    const xhrs = xhrRef.current;
+    return () => {
+      for (const xhr of xhrs.values()) xhr.abort();
+      xhrs.clear();
+    };
+  }, []);
+
+  function updateFoto(key: string, patch: Partial<FotoItem>) {
+    // Functionele update: als de foto intussen verwijderd is, gebeurt er niets.
+    setFotos((prev) => prev.map((f) => (f.key === key ? { ...f, ...patch } : f)));
+  }
+
+  async function vraagUploadUrl(file: File, kind: "fotos" | "logo") {
     const res = await fetch("/api/onboarding/upload-url", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -66,13 +109,67 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
     if (!res.ok || !data.signedUrl || !data.path) {
       throw new Error(data.error ?? "Upload voorbereiden mislukt.");
     }
-    const put = await fetch(data.signedUrl, {
-      method: "PUT",
-      headers: { "content-type": file.type || "image/jpeg" },
-      body: file,
+    return { signedUrl: data.signedUrl, path: data.path };
+  }
+
+  function xhrPut(
+    url: string,
+    file: File,
+    key: string,
+    onProgress: (pct: number) => void,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhrRef.current.set(key, xhr);
+      xhr.open("PUT", url);
+      xhr.setRequestHeader("content-type", file.type || "image/jpeg");
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable) {
+          onProgress(Math.round((ev.loaded / ev.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        xhrRef.current.delete(key);
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload mislukt (${xhr.status}).`));
+      };
+      xhr.onerror = () => {
+        xhrRef.current.delete(key);
+        reject(new Error("Netwerkfout tijdens uploaden."));
+      };
+      xhr.onabort = () => {
+        xhrRef.current.delete(key);
+        reject(new Error("Upload afgebroken."));
+      };
+      xhr.send(file);
     });
-    if (!put.ok) throw new Error(`Upload mislukt (${put.status}).`);
-    return data.path;
+  }
+
+  // Wachtrij: maximaal MAX_TEGELIJK foto-uploads tegelijk.
+  function pomp() {
+    while (activeRef.current < MAX_TEGELIJK && queueRef.current.length > 0) {
+      const key = queueRef.current.shift()!;
+      const file = filesRef.current.get(key);
+      if (!file) continue; // intussen verwijderd
+      activeRef.current++;
+      updateFoto(key, { status: "bezig", progress: 0, error: undefined });
+      vraagUploadUrl(file, "fotos")
+        .then(({ signedUrl, path }) =>
+          xhrPut(signedUrl, file, key, (pct) => updateFoto(key, { progress: pct })).then(
+            () => updateFoto(key, { status: "klaar", progress: 100, path }),
+          ),
+        )
+        .catch((err: unknown) =>
+          updateFoto(key, {
+            status: "fout",
+            error: err instanceof Error ? err.message : "Upload mislukt",
+          }),
+        )
+        .finally(() => {
+          activeRef.current--;
+          pomp();
+        });
+    }
   }
 
   function onFotosChange(e: ChangeEvent<HTMLInputElement>) {
@@ -88,71 +185,75 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
     } else if (files.length > 0) {
       setFotoMelding("");
     }
-    files.slice(0, ruimte).forEach((file) => {
+    files.slice(0, Math.max(0, ruimte)).forEach((file) => {
       const key = `f${keyCounter.current++}`;
       if (file.size > MAX_SIZE) {
         setFotos((prev) => [
           ...prev,
-          { key, name: file.name, status: "fout", error: "Groter dan 15 MB" },
+          { key, name: file.name, status: "fout", progress: 0, error: "Groter dan 15 MB" },
         ]);
         return;
       }
-      setFotos((prev) => [...prev, { key, name: file.name, status: "bezig" }]);
-      uploadFile(file, "fotos")
-        .then((path) =>
-          setFotos((prev) =>
-            prev.map((f) => (f.key === key ? { ...f, status: "klaar", path } : f)),
-          ),
-        )
-        .catch((err: unknown) =>
-          setFotos((prev) =>
-            prev.map((f) =>
-              f.key === key
-                ? {
-                    ...f,
-                    status: "fout",
-                    error: err instanceof Error ? err.message : "Upload mislukt",
-                  }
-                : f,
-            ),
-          ),
-        );
+      filesRef.current.set(key, file);
+      setFotos((prev) => [
+        ...prev,
+        { key, name: file.name, status: "wachtrij", progress: 0 },
+      ]);
+      queueRef.current.push(key);
     });
+    pomp();
+  }
+
+  function verwijderFoto(key: string) {
+    xhrRef.current.get(key)?.abort(); // lopende upload direct afbreken
+    queueRef.current = queueRef.current.filter((k) => k !== key);
+    filesRef.current.delete(key);
+    setFotos((prev) => prev.filter((f) => f.key !== key));
+  }
+
+  function opnieuwFoto(key: string) {
+    if (!filesRef.current.has(key)) return;
+    updateFoto(key, { status: "wachtrij", progress: 0, error: undefined });
+    queueRef.current.push(key);
+    pomp();
   }
 
   function onLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    // Eerdere logo-upload afbreken; die mag deze keuze niet overschrijven.
+    if (logoKeyRef.current) xhrRef.current.get(logoKeyRef.current)?.abort();
     const key = `logo${keyCounter.current++}`;
     logoKeyRef.current = key;
     if (file.size > MAX_SIZE) {
-      setLogo({ key, name: file.name, status: "fout", error: "Groter dan 15 MB" });
+      setLogo({ key, name: file.name, status: "fout", progress: 0, error: "Groter dan 15 MB" });
       return;
     }
-    setLogo({ key, name: file.name, status: "bezig" });
-    uploadFile(file, "logo")
-      .then((path) => {
-        if (logoKeyRef.current !== key) return; // inmiddels ander logo gekozen
-        setLogo({ key, name: file.name, status: "klaar", path });
-      })
-      .catch((err: unknown) => {
-        if (logoKeyRef.current !== key) return;
-        setLogo({
-          key,
-          name: file.name,
+    setLogo({ key, name: file.name, status: "bezig", progress: 0 });
+    const zetLogo = (patch: Partial<FotoItem>) => {
+      if (logoKeyRef.current !== key) return; // inmiddels ander logo gekozen
+      setLogo((prev) => (prev && prev.key === key ? { ...prev, ...patch } : prev));
+    };
+    vraagUploadUrl(file, "logo")
+      .then(({ signedUrl, path }) =>
+        xhrPut(signedUrl, file, key, (pct) => zetLogo({ progress: pct })).then(() =>
+          zetLogo({ status: "klaar", progress: 100, path }),
+        ),
+      )
+      .catch((err: unknown) =>
+        zetLogo({
           status: "fout",
           error: err instanceof Error ? err.message : "Upload mislukt",
-        });
-      });
+        }),
+      );
   }
 
-  function verwijderFoto(key: string) {
-    setFotos((prev) => prev.filter((f) => f.key !== key));
-  }
-
-  const bezig = fotos.some((f) => f.status === "bezig") || logo?.status === "bezig";
+  const bezig =
+    fotos.some((f) => f.status === "bezig" || f.status === "wachtrij") ||
+    logo?.status === "bezig";
   const geslaagd = fotos.filter((f) => f.status === "klaar");
+  const mislukt = fotos.filter((f) => f.status === "fout");
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -226,8 +327,21 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
     );
   }
 
+  function fotoStatusTekst(f: FotoItem): string {
+    switch (f.status) {
+      case "wachtrij":
+        return "In de wachtrij...";
+      case "bezig":
+        return `Bezig... ${f.progress}%`;
+      case "klaar":
+        return "✓ Geupload";
+      case "fout":
+        return `Mislukt: ${f.error}`;
+    }
+  }
+
   return (
-    <form className="ob-form" onSubmit={submit}>
+    <form className="ob-form" onSubmit={submit} onChange={() => setAangeraakt(true)}>
       <p className="sr-only" aria-live="polite" role="status">
         {bezig ? "Foto's worden geupload." : ""}
       </p>
@@ -356,11 +470,10 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
             <ul className="ob-files">
               <li className={`ob-file ob-file--${logo.status}`}>
                 <span className="ob-file__name">{logo.name}</span>
-                <span className="ob-file__status">
-                  {logo.status === "bezig" && "Bezig..."}
-                  {logo.status === "klaar" && "✓ Geupload"}
-                  {logo.status === "fout" && `Mislukt: ${logo.error}`}
-                </span>
+                <span className="ob-file__status">{fotoStatusTekst(logo)}</span>
+                {logo.status === "bezig" && (
+                  <span className="ob-file__bar" style={{ width: `${logo.progress}%` }} aria-hidden="true" />
+                )}
               </li>
             </ul>
           )}
@@ -391,11 +504,16 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
             {fotos.map((f) => (
               <li className={`ob-file ob-file--${f.status}`} key={f.key}>
                 <span className="ob-file__name">{f.name}</span>
-                <span className="ob-file__status">
-                  {f.status === "bezig" && "Bezig..."}
-                  {f.status === "klaar" && "✓ Geupload"}
-                  {f.status === "fout" && `Mislukt: ${f.error}`}
-                </span>
+                <span className="ob-file__status">{fotoStatusTekst(f)}</span>
+                {f.status === "fout" && filesRef.current.has(f.key) && (
+                  <button
+                    type="button"
+                    className="ob-file__retry"
+                    onClick={() => opnieuwFoto(f.key)}
+                  >
+                    Opnieuw
+                  </button>
+                )}
                 <button
                   type="button"
                   className="ob-file__remove"
@@ -404,14 +522,17 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
                 >
                   ✕
                 </button>
+                {f.status === "bezig" && (
+                  <span className="ob-file__bar" style={{ width: `${f.progress}%` }} aria-hidden="true" />
+                )}
               </li>
             ))}
           </ul>
         )}
         <p className="ob-hint">
           {geslaagd.length} foto{geslaagd.length === 1 ? "" : "'s"} geupload.
-          {fotos.some((f) => f.status === "fout") &&
-            " Mislukte foto's gaan niet mee; probeer ze opnieuw of stuur ze later na."}{" "}
+          {mislukt.length > 0 &&
+            ` ${mislukt.length} mislukt; probeer die opnieuw of stuur ze later na.`}{" "}
           Geen foto&apos;s bij de hand? Je kunt ze ook later via WhatsApp nasturen.
         </p>
       </fieldset>

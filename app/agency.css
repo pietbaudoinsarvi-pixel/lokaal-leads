@@ -50,7 +50,9 @@
   border: none; cursor: pointer; border-radius: 10px; padding: .9rem 1.7rem;
   transition: transform .15s ease, box-shadow .15s ease;
 }
-.a-btn--accent { background: var(--a-accent); color: #fff; }
+/* Donkere tekst op oranje: wit op #E8762D haalt WCAG AA niet (ca. 3:1),
+   marineblauw op oranje wel (ca. 4,5:1). */
+.a-btn--accent { background: var(--a-accent); color: var(--a-dark); }
 .a-btn--accent:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(232, 118, 45, .35); }
 .a-btn--ghost { background: transparent; color: #fff; border: 2px solid rgba(255, 255, 255, .55); }
 .a-btn--ghost:hover { border-color: #fff; }
@@ -124,7 +126,7 @@
 /* Stappen */
 .a-steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
 .a-step { position: relative; background: #fff; border: 1px solid var(--a-line); border-radius: var(--a-radius); padding: 2.4rem 1.5rem 1.6rem; }
-.a-step__num { position: absolute; top: -1.1rem; left: 1.5rem; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--a-accent); color: #fff; font-weight: 800; font-size: 1.15rem; display: grid; place-items: center; box-shadow: 0 8px 20px rgba(232, 118, 45, .3); }
+.a-step__num { position: absolute; top: -1.1rem; left: 1.5rem; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--a-accent); color: var(--a-dark); font-weight: 800; font-size: 1.15rem; display: grid; place-items: center; box-shadow: 0 8px 20px rgba(232, 118, 45, .3); }
 .a-step__title { font-size: 1.18rem; margin: 0 0 .5rem; color: var(--a-dark); }
 .a-step__desc { color: var(--a-muted); margin: 0; font-size: .97rem; }
 @media (max-width: 820px) { .a-steps { grid-template-columns: 1fr; gap: 2rem; } }
@@ -164,7 +166,7 @@
 .agency .field span { font-weight: 600; font-size: .92rem; color: var(--a-dark); }
 .agency .field input, .agency .field textarea { font-family: inherit; font-size: 1rem; padding: .8rem .9rem; border: 1px solid var(--a-line); border-radius: 8px; background: var(--a-bg-warm); color: var(--a-ink); width: 100%; }
 .agency .field input:focus, .agency .field textarea:focus { outline: none; border-color: var(--a-primary); box-shadow: 0 0 0 3px rgba(31, 68, 103, .18); background: #fff; }
-.agency .lead-form .btn { display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-family: inherit; font-size: 1rem; border: none; cursor: pointer; border-radius: 10px; padding: .9rem 1.7rem; background: var(--a-accent); color: #fff; }
+.agency .lead-form .btn { display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-family: inherit; font-size: 1rem; border: none; cursor: pointer; border-radius: 10px; padding: .9rem 1.7rem; background: var(--a-accent); color: var(--a-dark); }
 .agency .lead-form .btn:disabled { opacity: .6; cursor: default; }
 .agency .lead-form__note { font-size: .85rem; color: var(--a-muted); margin: 0; text-align: center; }
 .agency .lead-form__error { color: #b3261e; font-size: .92rem; margin: 0; }
