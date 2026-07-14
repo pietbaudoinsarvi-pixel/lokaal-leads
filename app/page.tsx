@@ -8,8 +8,9 @@ export default function Home() {
         Demo-hoveniersite: <Link href="/demo-hovenier">/demo-hovenier</Link>
       </p>
       <p style={{ color: "#666" }}>
-        Losse lead-pijplijn test: <Link href="/lead-test">/lead-test</Link>. Een nieuwe
-        klant toevoegen betekent puur een nieuw bestand in <code>/config/clients</code>.
+        Operator-tests: <Link href="/lead-test">/lead-test</Link> (leadmelding) en{" "}
+        <Link href="/review-test">/review-test</Link> (review-verzoek). Een nieuwe klant
+        toevoegen betekent puur een nieuw bestand in <code>/config/clients</code>.
       </p>
     </main>
   );
