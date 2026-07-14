@@ -7,7 +7,8 @@ export type NotifyChannel = "telegram" | "whatsapp" | "sms" | "email";
 export interface ServiceItem {
   title: string;
   description: string;
-  icon?: string; // emoji of icon-naam, gebruikt in stap 2
+  icon?: string; // emoji of icon-naam, fallback als er geen foto is
+  image?: string; // pad naar een foto voor deze dienst (voorkeur boven icon)
 }
 
 export interface FaqItem {
@@ -18,6 +19,11 @@ export interface FaqItem {
 export interface CtaBlock {
   heading: string;
   body: string;
+}
+
+export interface GalleryItem {
+  image: string;
+  caption?: string;
 }
 
 export interface ClientConfig {
@@ -43,7 +49,7 @@ export interface ClientConfig {
     onAccent?: string; // tekstkleur op --accent (contrast), default donker
   };
 
-  // Presentatie: alles wat de sjabloon-UI rendert (stap 2).
+  // Presentatie: alles wat de sjabloon-UI rendert.
   presentation: {
     hero: {
       heading: string;
@@ -65,7 +71,15 @@ export interface ClientConfig {
       heading: string;
       intro: string;
     };
-    // Call-to-action-banden. Per klant/niche te tekstueel aan te passen.
+    // Korte belofte-punten in de strip onder de hero (optioneel).
+    usps?: string[];
+    // Portfolio/galerij van uitgevoerd werk (optioneel).
+    gallery?: {
+      heading: string;
+      intro?: string;
+      items: GalleryItem[];
+    };
+    // Call-to-action-banden. Per klant/niche tekstueel aan te passen.
     cta: {
       home: CtaBlock;
       about: CtaBlock;
@@ -73,7 +87,7 @@ export interface ClientConfig {
     photos: Record<string, string>; // benoemde foto-slots -> url/pad
   };
 
-  // AI-kennis: voedt de system prompt van de chatbot (stap 3).
+  // AI-kennis: voedt de system prompt van de chatbot.
   ai: {
     tone: string;
     services: string[];

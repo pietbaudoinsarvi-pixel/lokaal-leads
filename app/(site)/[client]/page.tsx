@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getClient } from "@/lib/clients";
 import Hero from "@/components/site/Hero";
+import Usps from "@/components/site/Usps";
 import Services from "@/components/site/Services";
+import Gallery from "@/components/site/Gallery";
 import About from "@/components/site/About";
 
 export default async function HomePage({ params }: { params: Promise<{ client: string }> }) {
@@ -19,8 +21,11 @@ export default async function HomePage({ params }: { params: Promise<{ client: s
         slug={config.slug}
         phone={config.business.phone}
         photo={p.photos[p.hero.imageSlot]}
+        eyebrow={config.business.city}
       />
+      <Usps usps={p.usps} />
       <Services services={p.services} />
+      <Gallery gallery={p.gallery} />
       <About about={p.about} photo={p.photos[p.about.imageSlot]} />
       <section className="cta-band">
         <div className="container cta-band__inner">

@@ -7,26 +7,21 @@ interface HeroProps {
   slug: string;
   phone: string;
   photo?: string;
+  eyebrow?: string;
 }
 
-export default function Hero({ hero, slug, phone, photo }: HeroProps) {
-  // Foto aanwezig: een overlay (afgeleid van de themekleur) boven de foto, met
-  // de thema-gradient als laatste laag. Ontbreekt het fotobestand, dan valt de
-  // hero netjes terug op de themekleuren in plaats van een kaal plaatje.
-  // Geen foto: de CSS-gradient uit .hero geldt.
+export default function Hero({ hero, slug, phone, photo, eyebrow }: HeroProps) {
+  // Full-bleed foto met CSS-scrim (::after) voor leesbaarheid. Ontbreekt het
+  // fotobestand, dan valt de hero terug op de thema-gradient.
   const style: CSSProperties | undefined = photo
-    ? {
-        backgroundImage:
-          "linear-gradient(135deg, color-mix(in srgb, var(--dark) 74%, transparent), color-mix(in srgb, var(--dark) 55%, transparent)), " +
-          `url('${photo}'), ` +
-          "linear-gradient(135deg, var(--primary), var(--dark))",
-      }
+    ? { backgroundImage: `url('${photo}'), linear-gradient(135deg, var(--primary), var(--dark))` }
     : undefined;
   const telHref = `tel:${phone.replace(/[^0-9+]/g, "")}`;
 
   return (
     <section className="hero" style={style}>
       <div className="container hero__inner">
+        {eyebrow && <span className="eyebrow">{eyebrow}</span>}
         <h1 className="hero__title">{hero.heading}</h1>
         <p className="hero__sub">{hero.subheading}</p>
         <div className="hero__actions">
