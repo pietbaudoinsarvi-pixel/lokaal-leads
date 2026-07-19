@@ -1,6 +1,6 @@
 # Websitemannetje: handleiding voor de operator
 
-Alles wat je nodig hebt om klanten te winnen, sites live te zetten en het systeem draaiend te houden. Voor de technische details van de code: zie `README.md`.
+Alles wat je nodig hebt om klanten te winnen, sites live te zetten en het systeem draaiend te houden. Voor de technische details van de code: zie `README.md`. Voor het aanscherpen van je aanbod, garantie en verkoopteksten: zie `HANDLEIDING-AANBOD.md`.
 
 **De plekken:**
 
