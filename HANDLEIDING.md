@@ -6,10 +6,10 @@ Alles wat je nodig hebt om klanten te winnen, sites live te zetten en het systee
 
 | Wat | Waar |
 |---|---|
-| Live site (agency + alle klant-sites) | https://lokaal-leads.vercel.app |
-| Code | https://github.com/pietbaudoinsarvi-pixel/lokaal-leads (privé) |
-| Lokaal | `C:\Users\piet_\lokaal-leads` |
-| Hosting en env-vars | Vercel-dashboard, project **lokaal-leads** |
+| Live site (agency + alle klant-sites) | https://websitemannetje.vercel.app |
+| Code | https://github.com/pietbaudoinsarvi-pixel/websitemannetje (privé) |
+| Lokaal | `C:\Users\piet_\websitemannetje` |
+| Hosting en env-vars | Vercel-dashboard, project **websitemannetje** |
 | Aanleveringen en foto's | Supabase-dashboard, Storage, bucket **onboarding** |
 | Leads en logs | Supabase-dashboard, Table Editor (`leads`, `events`, `deliveries`, `review_requests`) |
 
@@ -62,7 +62,7 @@ npm run nieuwe-klant -- --demo "Tuinen Van Dijk" "Amersfoort"
 
 Dit maakt `config/clients/tuinen-van-dijk.ts`: hun naam en plaats, nette hovenier-teksten, demo-foto's en voorbeeld-reviews. De demo is noindex (komt niet in Google) en meldingen komen bij jou binnen. Bekijk hem met `npm run dev` op `localhost:3000/tuinen-van-dijk`, pas eventueel teksten aan, en zet hem live met `vercel --prod`.
 
-**Stap 3: kaart printen en versturen.** Open `https://lokaal-leads.vercel.app/print/tuinen-van-dijk`, klik op de printknop (A5, stevig papier, 200 grams of meer). Op de kaart staan een QR-code naar de demo, de prijs en de verplichte afmeldregel. Adresseren, postzegel, klaar.
+**Stap 3: kaart printen en versturen.** Open `https://websitemannetje.vercel.app/print/tuinen-van-dijk`, klik op de printknop (A5, stevig papier, 200 grams of meer). Op de kaart staan een QR-code naar de demo, de prijs en de verplichte afmeldregel. Adresseren, postzegel, klaar.
 
 **Stap 4: opvolgen.** Bewezen ritme: dag 0 de kaart, dag 3 tot 7 langsgaan (of bellen als het een BV is), eventueel een korte persoonlijke video als extra contactmoment. Realistische verwachting: 3 tot 5% wordt klant bij koude benadering; je eerste klant komt waarschijnlijk uit je eigen netwerk.
 
@@ -71,7 +71,7 @@ Dit maakt `config/clients/tuinen-van-dijk.ts`: hun naam en plaats, nette hovenie
 **Stap 1: aanleverformulier sturen.** Stuur de klant deze link (vult zijn bedrijfsnaam alvast in):
 
 ```
-https://lokaal-leads.vercel.app/onboarding?bedrijf=Tuinen+Van+Dijk
+https://websitemannetje.vercel.app/onboarding?bedrijf=Tuinen+Van+Dijk
 ```
 
 De klant vult alles in vanaf zijn telefoon: gegevens, diensten, verhaal, kleur, logo en tot 60 foto's (worden automatisch verkleind en naar WebP omgezet). Jij krijgt een melding met het inzending-id; alles staat in Supabase Storage onder `onboarding/<id>/`.
@@ -100,7 +100,7 @@ npm run nieuwe-klant -- <submissionId> tuinen-van-dijk --force
 **Reviewverzoeken.** Na elke afgeronde klus stuur je namens de klant een reviewverzoek naar diens klant. Makkelijkste weg: de testpagina `/review-test`, of direct:
 
 ```
-POST https://lokaal-leads.vercel.app/api/review-request
+POST https://websitemannetje.vercel.app/api/review-request
 { "clientSlug": "tuinen-van-dijk", "phone": "+31612345678" }
 ```
 
@@ -118,7 +118,7 @@ Zolang de WhatsApp Cloud API niet is ingesteld krijg JIJ het verzoek doorgestuur
 | Probleem | Oplossing |
 |---|---|
 | Melding komt niet aan | Check de `deliveries`-tabel in Supabase (daar staat de fout), check env-vars in Vercel. De lead zelf is nooit weg: staat in de `leads`-tabel. |
-| Vercel vraagt "deploying your home directory" | Je staat niet in de projectmap. `cd C:\Users\piet_\lokaal-leads` en opnieuw. |
+| Vercel vraagt "deploying your home directory" | Je staat niet in de projectmap. `cd C:\Users\piet_\websitemannetje` en opnieuw. |
 | Nieuwe klant-config geeft 404 | Lokaal: dev-server herstart. Live: eerst deployen (configs worden bij de build ingepakt). |
 | Foto-upload klant faalt | Limieten: 60 foto's, 15 MB per foto, 120 uploads per 10 minuten. Laat de klant even wachten en opnieuw proberen; gelukte foto's blijven staan. |
 | Formulier zegt "te veel inzendingen" | Rate limit (10 per 10 minuten per IP-adres), gaat vanzelf over. |

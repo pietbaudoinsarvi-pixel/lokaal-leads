@@ -1,4 +1,4 @@
-# Websitemannetje (repo: lokaal-leads)
+# Websitemannetje
 
 Geproductiseerde websites met een slimme backend voor lokale vakmensen
 (start-niche: hoveniers). De website is de haak; de waarde zit in de
@@ -9,7 +9,7 @@ eigenaar, en na elke klus gaat er automatisch een Google-review-verzoek uit.
 configbestand. Een nieuwe klant toevoegen = een nieuw bestand in
 `/config/clients/<slug>.ts`. Nooit nieuwe paginacode of layout per klant.
 
-Live: [lokaal-leads.vercel.app](https://lokaal-leads.vercel.app)
+Live: [websitemannetje.vercel.app](https://websitemannetje.vercel.app)
 (eigen merk-site) en `/demo-hovenier` (klant-demo).
 
 ## Wat er is (alles werkend en live)

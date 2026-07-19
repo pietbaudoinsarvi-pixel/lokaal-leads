@@ -1,5 +1,5 @@
 -- ============================================================
--- Lokaal Leads - runtime schema (Supabase / Postgres)
+-- Websitemannetje - runtime schema (Supabase / Postgres)
 -- Config per klant leeft in de repo (/config/clients). Supabase bevat
 -- alleen RUNTIME-data, geattribueerd per client_slug.
 -- Draai dit in de Supabase SQL Editor (of via de CLI).
