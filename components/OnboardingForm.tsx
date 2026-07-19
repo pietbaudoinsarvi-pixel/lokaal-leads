@@ -127,6 +127,9 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
   // Actuele logo-selectie, zodat een trage oude upload een nieuwere keuze
   // niet kan overschrijven (state-race).
   const logoKeyRef = useRef<string>("");
+  // Bevestigingsblok, zodat we de focus daarheen kunnen verplaatsen zodra de
+  // inzending klaar is (toetsenbord en screenreader).
+  const doneRef = useRef<HTMLDivElement>(null);
 
   // Waarschuw bij wegklikken zolang er iets is ingevuld of geupload en de
   // inzending nog niet verstuurd is.
@@ -149,6 +152,12 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
       xhrs.clear();
     };
   }, []);
+
+  // Zodra de inzending klaar is de focus naar de bevestiging verplaatsen, zodat
+  // toetsenbord- en screenreader-gebruikers niet terugvallen naar de body.
+  useEffect(() => {
+    if (status === "klaar") doneRef.current?.focus();
+  }, [status]);
 
   function updateFoto(key: string, patch: Partial<FotoItem>) {
     // Functionele update: als de foto intussen verwijderd is, gebeurt er niets.
@@ -400,7 +409,7 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
 
   if (status === "klaar") {
     return (
-      <div className="ob-done" role="status">
+      <div className="ob-done" role="status" ref={doneRef} tabIndex={-1}>
         <div className="ob-done__icon" aria-hidden="true">✓</div>
         <h2>Alles ontvangen, dank je wel!</h2>
         <p>
@@ -419,7 +428,7 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
       case "bezig":
         return `Bezig... ${f.progress}%`;
       case "klaar":
-        return "✓ Geupload";
+        return "✓ Geüpload";
       case "fout":
         return `Mislukt: ${f.error}`;
     }
@@ -428,7 +437,7 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
   return (
     <form className="ob-form" onSubmit={submit} onChange={() => setAangeraakt(true)}>
       <p className="sr-only" aria-live="polite" role="status">
-        {bezig ? "Foto's worden geupload." : ""}
+        {bezig ? "Foto's worden geüpload." : ""}
       </p>
 
       <fieldset className="ob-section">
@@ -616,7 +625,7 @@ export default function OnboardingForm({ prefillBedrijf = "" }: { prefillBedrijf
           </ul>
         )}
         <p className="ob-hint">
-          {geslaagd.length} foto{geslaagd.length === 1 ? "" : "'s"} geupload.
+          {geslaagd.length} foto{geslaagd.length === 1 ? "" : "'s"} geüpload.
           {mislukt.length > 0 &&
             ` ${mislukt.length} mislukt; probeer die opnieuw of stuur ze later na.`}{" "}
           Geen foto&apos;s bij de hand? Je kunt ze ook later via WhatsApp nasturen.

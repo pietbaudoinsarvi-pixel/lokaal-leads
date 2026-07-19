@@ -29,7 +29,13 @@ export default async function ContactPage({ params }: { params: Promise<{ client
           <p>{p.contact.intro}</p>
         </div>
       </section>
-      <Contact contact={p.contact} business={config.business} slug={config.slug} hideHead />
+      <Contact
+        contact={p.contact}
+        business={config.business}
+        slug={config.slug}
+        hideHead
+        informal={p.aanspreekvorm === "je"}
+      />
     </>
   );
 }

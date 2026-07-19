@@ -51,6 +51,10 @@ export interface ClientConfig {
 
   // Presentatie: alles wat de sjabloon-UI rendert.
   presentation: {
+    // Aanspreekvorm van de interactieve componenten (formulier-teksten).
+    // Default "u"; zet "je" voor klanten die hun bezoekers tutoyeren, zodat
+    // het formulier past bij de rest van de site-copy.
+    aanspreekvorm?: "u" | "je";
     hero: {
       heading: string;
       subheading: string;

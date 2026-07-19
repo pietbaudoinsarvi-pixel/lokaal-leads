@@ -1,4 +1,5 @@
 import { TelegramNotifier } from "@/lib/notify/telegram";
+import { line } from "@/lib/util/text";
 import type { MessageResult, MessageSender } from "./types";
 
 // Stub via Telegram. Tot we een SMS/WhatsApp-provider (Bird/Twilio) hebben, kan
@@ -12,7 +13,9 @@ export class TelegramMessageSender implements MessageSender {
     const operator = process.env.OPERATOR_TELEGRAM_CHAT_ID?.replace(/^﻿/, "").trim();
     if (!operator) return { ok: false, error: "OPERATOR_TELEGRAM_CHAT_ID ontbreekt" };
     const body = [
-      `📤 Review-verzoek voor klant ${to}:`,
+      // line(): het nummer komt uit het publieke request en mag geen extra
+      // regels in de operator-melding kunnen injecteren.
+      `📤 Review-verzoek voor klant ${line(to)}:`,
       ``,
       text,
       ``,

@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { agency } from "@/config/agency";
+import { siteUrl } from "@/lib/site-url";
 import LeadForm from "@/components/LeadForm";
 import "./agency.css";
 
 export const metadata = {
   title: `${agency.name} | ${agency.tagline}`,
   description: agency.metaDescription,
+  // Eigen canonical zodat Google de homepage onder één host indexeert en niet
+  // ook onder de vercel.app-preview- of apex/www-varianten. siteUrl staat zonder
+  // trailing slash, gelijk aan de sitemap-loc, zodat beide exact overeenkomen.
+  alternates: { canonical: siteUrl },
   openGraph: {
     title: `${agency.name} | ${agency.tagline}`,
     description: agency.metaDescription,

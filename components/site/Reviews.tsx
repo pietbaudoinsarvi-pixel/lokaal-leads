@@ -59,7 +59,7 @@ export default function Reviews({ reviews, googleReviewLink }: ReviewsProps) {
               rel="noopener noreferrer"
               className="btn btn--primary"
             >
-              Lees meer beoordelingen op {source}
+              Laat een review achter op {source}
             </a>
           </div>
         )}

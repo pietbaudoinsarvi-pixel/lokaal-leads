@@ -71,6 +71,33 @@ export async function deriveLead(input: DeriveLeadInput): Promise<{ id: string }
   return data as { id: string };
 }
 
+// Herstelpad voor het duplicaat-scenario in submitLead: kijk of er voor dit
+// event al een lead-record bestaat. limit(1) in plaats van single, zodat een
+// zeldzaam dubbel record het herstel niet laat crashen.
+export async function findLeadIdByEventId(event_id: string): Promise<string | null> {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id")
+    .eq("event_id", event_id)
+    .limit(1);
+  if (error) throw error;
+  return data && data.length > 0 ? (data[0] as { id: string }).id : null;
+}
+
+// Is er voor dit event al een geslaagde melding gelogd?
+export async function hasSentDelivery(event_id: string): Promise<boolean> {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from("deliveries")
+    .select("event_id")
+    .eq("event_id", event_id)
+    .eq("status", "sent")
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
 export interface LogDeliveryInput {
   event_id: string;
   channel: string;

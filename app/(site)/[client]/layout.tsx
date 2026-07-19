@@ -103,7 +103,7 @@ export default async function SiteLayout({
         slug={config.slug}
         logoMark={config.business.logoMark}
       />
-      <main id="main">{children}</main>
+      <main id="main" tabIndex={-1}>{children}</main>
       <Footer
         business={config.business}
         slug={config.slug}

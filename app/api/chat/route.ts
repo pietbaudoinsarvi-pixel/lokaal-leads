@@ -3,6 +3,7 @@ import { getClient } from "@/lib/clients";
 import { getAnthropic, getModel } from "@/lib/ai/anthropic";
 import { buildSystemPrompt } from "@/lib/ai/systemPrompt";
 import { submitLead } from "@/lib/leads/submit";
+import { clientIp, rateLimit } from "@/lib/util/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +33,29 @@ const CAPTURE_LEAD_TOOL: Anthropic.Tool = {
   strict: true,
 };
 
+// Misbruik-remmen voor dit publieke, onauthenticeerde endpoint. Elke POST start
+// een betaalde Claude-stream (agentische lus tot 4 rondes van 1024 tokens) en kan
+// per ronde capture_lead aanroepen. Zonder rem kan een aanvaller ongelimiteerd
+// Anthropic-kosten opjagen en via de lead-tool meldingen spammen. Best-effort
+// in-memory per warme instance, net als de onboarding-routes: een korte rem per
+// IP, plus een harde dagbovengrens per IP en globaal als kostenplafond.
+const CHAT_MAX_PER_MINUUT = 12; // berichten per IP per minuut
+const CHAT_MAX_PER_DAG = 300; // berichten per IP per 24 uur
+const CHAT_MAX_GLOBAAL_PER_DAG = 5000; // vangnet over alle IP's per 24 uur
+
 export async function POST(req: Request) {
+  const ip = clientIp(req);
+  if (
+    !rateLimit(`chat:${ip}`, CHAT_MAX_PER_MINUUT, 60_000) ||
+    !rateLimit(`chat:dag:${ip}`, CHAT_MAX_PER_DAG, 24 * 60 * 60_000) ||
+    !rateLimit("chat:globaal:dag", CHAT_MAX_GLOBAAL_PER_DAG, 24 * 60 * 60_000)
+  ) {
+    return new Response(
+      "Te veel chatberichten in korte tijd. Probeer het over een paar minuten opnieuw.",
+      { status: 429 },
+    );
+  }
+
   let body: ChatBody;
   try {
     body = (await req.json()) as ChatBody;

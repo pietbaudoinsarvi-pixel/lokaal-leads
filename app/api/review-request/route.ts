@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getClient } from "@/lib/clients";
 import { sendReviewRequest } from "@/lib/messaging/review";
 import type { MessageChannel } from "@/lib/messaging/types";
+import { clientIp, rateLimit } from "@/lib/util/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +15,18 @@ interface ReviewBody {
 
 const CHANNELS: MessageChannel[] = ["telegram", "sms", "whatsapp"];
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  // Dit endpoint verstuurt uitgaande (soms betaalde) berichten naar een vrij
+  // opgegeven nummer, of belast anders de operator via een melding. Publiek en
+  // zonder rem is het ongelimiteerd herhaalbaar, dus eerst een rate limit per
+  // IP, net als de onboarding-routes.
+  if (!rateLimit(`review:${clientIp(req)}`, 10, 10 * 60_000)) {
+    return NextResponse.json(
+      { ok: false, error: "Te veel review-verzoeken in korte tijd. Probeer het over een paar minuten opnieuw." },
+      { status: 429 },
+    );
+  }
+
   let body: ReviewBody;
   try {
     body = (await req.json()) as ReviewBody;
@@ -42,6 +54,16 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { ok: false, error: `Onbekende klant: ${clientSlug}.` },
       { status: 404 },
+    );
+  }
+
+  // Harde rem per klant: zo kan niemand onder één merknaam ongelimiteerd
+  // berichten laten uitgaan, ook niet vanaf wisselende IP-adressen. We tellen
+  // pas als de klant bestaat, zodat de teller alleen echte klanten volgt.
+  if (!rateLimit(`review:client:${client.slug}`, 30, 10 * 60_000)) {
+    return NextResponse.json(
+      { ok: false, error: "Te veel review-verzoeken voor deze klant in korte tijd. Probeer het later opnieuw." },
+      { status: 429 },
     );
   }
 

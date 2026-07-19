@@ -1,5 +1,6 @@
 import { notifyOperator } from "@/lib/notify/operator";
 import { waCloudTemplate, waCloudText, whatsAppProvider } from "@/lib/notify/whatsapp";
+import { line } from "@/lib/util/text";
 import type { MessageContext, MessageResult, MessageSender } from "./types";
 
 // Review-verzoek via WhatsApp, rechtstreeks naar de KLANT van de hovenier.
@@ -47,7 +48,9 @@ export class WhatsAppMessageSender implements MessageSender {
     // Nog geen Cloud API: naar de operator ter handmatige doorzending.
     const res = await notifyOperator(
       [
-        `📤 Review-verzoek voor klant ${to}:`,
+        // line(): het nummer komt uit het publieke request en mag geen extra
+        // regels in de operator-melding kunnen injecteren.
+        `📤 Review-verzoek voor klant ${line(to)}:`,
         ``,
         text,
         ``,

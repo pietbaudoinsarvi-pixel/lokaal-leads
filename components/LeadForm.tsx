@@ -24,6 +24,7 @@ export default function LeadForm({ slug, informal = false }: LeadFormProps) {
         vraag: "Je bericht (optioneel)",
         vraagPlaceholder: "Bedrijfsnaam en plaats, dan kan ik meteen aan de slag.",
         note: "Ik bel of app je binnen een werkdag terug. Geheel vrijblijvend.",
+        netwerkfout: "Kon niet verzenden. Controleer je verbinding en probeer het opnieuw.",
       }
     : {
         live: "Bedankt, uw aanvraag is verstuurd. Wij bellen u binnen een werkdag terug.",
@@ -33,6 +34,7 @@ export default function LeadForm({ slug, informal = false }: LeadFormProps) {
         vraag: "Uw vraag (optioneel)",
         vraagPlaceholder: "Vertel kort waar u ons voor nodig heeft.",
         note: "Wij bellen u binnen een werkdag terug. Geheel vrijblijvend.",
+        netwerkfout: "Kon niet verzenden. Controleer uw verbinding en probeer het opnieuw.",
       };
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
@@ -73,7 +75,7 @@ export default function LeadForm({ slug, informal = false }: LeadFormProps) {
       }
     } catch {
       setStatus("error");
-      setError("Kon niet verzenden. Controleer uw verbinding en probeer het opnieuw.");
+      setError(t.netwerkfout);
     } finally {
       inFlight.current = false;
     }

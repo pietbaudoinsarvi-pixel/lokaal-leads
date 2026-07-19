@@ -4,14 +4,23 @@ import { getNotifier } from "./index";
 import { notifyOperator } from "./operator";
 import type { LeadNotification } from "./types";
 
+// Voor velden die in de leadmelding belanden: regeleindes en andere
+// controltekens eruit, zodat niemand extra (vervalste) regels in de melding
+// kan injecteren. De lead blijft in opslag ongewijzigd; alleen de tekstmelding
+// wordt platgeslagen. Zelfde aanpak als in /api/onboarding.
+function line(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/[\r\n\t\u0000-\u001f\u007f]+/g, " ").trim();
+}
+
 function formatLeadMessage(lead: LeadNotification): string {
   const bron = lead.source === "chat" ? "AI-chat" : "Contactformulier";
   return [
     `🌱 Nieuwe lead voor ${lead.businessName}`,
     ``,
-    `Naam: ${lead.name}`,
-    `Telefoon: ${lead.phone}`,
-    `Bericht: ${lead.message || "(geen)"}`,
+    `Naam: ${line(lead.name)}`,
+    `Telefoon: ${line(lead.phone)}`,
+    `Bericht: ${line(lead.message) || "(geen)"}`,
     ``,
     `Bron: ${bron}`,
   ].join("\n");

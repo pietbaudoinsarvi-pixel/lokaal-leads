@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/lib/clients";
 import { submitLead } from "@/lib/leads/submit";
+import { clientIp, rateLimit } from "@/lib/util/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,16 @@ interface LeadBody {
 }
 
 export async function POST(req: Request) {
+  // Publiek endpoint, dus rem floods van nepleads per IP (zoals onboarding).
+  // De dedup-sleutel alleen is te omzeilen door bericht of telefoon per request
+  // te varieren, daarom is deze IP-limiet de eigenlijke rem tegen volpompen.
+  if (!rateLimit(`lead:${clientIp(req)}`, 10, 10 * 60_000)) {
+    return NextResponse.json(
+      { ok: false, error: "Te veel aanvragen in korte tijd. Probeer het over een paar minuten opnieuw." },
+      { status: 429 },
+    );
+  }
+
   let body: LeadBody;
   try {
     body = (await req.json()) as LeadBody;

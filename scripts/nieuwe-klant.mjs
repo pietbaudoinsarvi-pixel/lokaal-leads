@@ -377,6 +377,7 @@ const config: ClientConfig = {
   },
 
   presentation: {
+    aanspreekvorm: ${q(je ? "je" : "u")},
     hero: {
       heading: "Een tuin om trots op te zijn, zonder gedoe",${isDemo ? "" : " // TODO: persoonlijk maken"}
       subheading: "Van aanleg tot vast onderhoud. Betrouwbaar, netjes en op afspraak.",

@@ -6,9 +6,11 @@ interface ContactProps {
   business: ClientConfig["business"];
   slug: string;
   hideHead?: boolean;
+  // Je-vorm in het formulier, voor klanten met presentation.aanspreekvorm "je".
+  informal?: boolean;
 }
 
-export default function Contact({ contact, business, slug, hideHead = false }: ContactProps) {
+export default function Contact({ contact, business, slug, hideHead = false, informal = false }: ContactProps) {
   const telHref = `tel:${business.phone.replace(/[^0-9+]/g, "")}`;
   return (
     <section className="section" id="contact">
@@ -40,7 +42,7 @@ export default function Contact({ contact, business, slug, hideHead = false }: C
           </ul>
         </div>
         <div className="contact__form">
-          <LeadForm slug={slug} />
+          <LeadForm slug={slug} informal={informal} />
         </div>
       </div>
     </section>
